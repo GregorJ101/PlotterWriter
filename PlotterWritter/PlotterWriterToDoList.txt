@@ -1,0 +1,75 @@
+PlotterWriterToDoList
+
+- Fixes
+  [x] Mismatched code generation warning
+  [x] Test ESC commands to see if they're more responsive
+
+- Enhancements
+  [x] Port SerialSend.c to native cpp
+  [x] Write C++/CLI component to pass data between C# & native C++ components
+  [x] Support both serial and parallel ports (/P:<device name>) for parallel
+      [x] Default serial port to 9600 baud
+  [x] Clean up SerialPortWriter
+      [x] Comment out (or make conditional) all printf statements
+      [x] Call OpenComPort in default constructor like in ParallelPortWriter
+      [x] Make m_szDevName an std::string
+      [x] Call CloseOutputPort in destructor
+  [ ] Hello World apps
+      [ ] Static helper class in native C++
+      [ ] Static helper class in C#
+      [ ] Static helper class in C++/CLI
+      [x] Common base class in native C++
+      [x] Common base class in C#
+      [x] Common base class in C++/CLI
+  [x] Anything special to do for handling large buffers (> 1024)?  Handled automagically?
+      [x] Test on serial
+      [x] Test on parallel
+  [x] Move code to iterate through printers to base class
+      [ ] Return smart point to vector of stucts w/all fields currently used in iterating code
+          along with int for USB port #
+      [ ] Call before looking for COM port, skip over USB ports already in use by printers
+  [x] Add code to read from serial port
+      [ ] Add overloaded WriteText method to optionally read after writing
+          WriteText returns a string containing what's in the read buffer, empty if nothing
+      [ ] Make sure GetPortName exists in base class and is overridden in each subclass
+      [ ] Put the code in the base class to return the portname along with code to set it
+          Make PortName a property?
+      [ ] Add ReadText method to explicitly read from port
+      [x] Retrieve document size status?
+      [x} Add methods in C# to query specific status info
+      [x] Add parameter for sleep time between write & read
+          (in case plotter needs time to respond)
+  [ ] Why does ParallelPortWriter need special UTG16 code while SerialPortWriter doesn't?
+  [x] Test for error codes in C++/CLI and throw exception
+      [x] Catch in C# layer
+  [ ] Write C# component to create HPGL strings to drive plotter
+      [ ] Create basic shapes (rectangles, trapezoids, ...)
+      [ ] Create sine waves
+      [ ] Create simple shapes in patterns (sine waves, straight lines, curves, ...)
+      [ ] Create cycloids
+      [ ] Create frames by connecting dots along one line to dots along another
+  [ ] Later, add ADO.NET compnent for storing state to Access database
+      [ ] Also store strings, HPGL resources, shape data, stuff entered via UI, ...
+  [ ] Later, add WPF component for UI
+  [ ] Later, add ASP.NET compnent for web UI
+  [ ] Later, read text file with HPGL commands
+  [x] Buffer HPGL commands and sort first by pen,
+      [ ] and then to minimize travel time from the end of one line to the start of the next
+      [ ] Add code to track all states set by instructions
+          [ ] Character set(s) selected
+          [ ] Absolure/relative plotting
+          [ ] Scaling
+          [ ] Pen up/down
+  [x] Add bidirectional support to serial port code to receive data from plotter
+      [x] Response to "what is your device name?" query
+      [x] Point coordinates for manually entering digitized data
+- Deferred Fixes
+  [ ] Unresolved token errors in adding helper class project
+  [ ] Unresolved external errors in adding CLI base class project
+- Deferred Enhancements
+  [ ] Clean up SerialPortWriter
+      [ ] Call OpenNamedPort in overloaded constructor that takes int iPortNumber
+      [ ] Call OpenComPort in WriteTextString like in ParallelPortWriter
+  [x] Create abstract base class that both C++/CLI classess inherit from
+      [x] Derive both classes from it
+      [x] Adjust C# code to use base class pointer polymorphically
