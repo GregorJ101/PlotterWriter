@@ -8,25 +8,9 @@ using System.Threading;
 
 using WrapperBaseClass;
 using SerialPortWriter;
-using ParallelPortWriter;
 
 namespace HPGL
 {
-    public enum EPenSelect
-    {
-        ESelectNoPen     = 0,
-        ESelectPen1      = 1,
-        ESelectPen2      = 2,
-        ESelectPen3      = 3,
-        ESelectPen4      = 4,
-        ESelectPen5      = 5,
-        ESelectPen6      = 6,
-        ESelectPen7      = 7,
-        ESelectPen8      = 8,
-        ESelectAllPens   = 9,
-        ESelectPenRandom = 10
-    };
-
     public class CUDCPoints // User-Defined Character
     {
         private List<float> m_lfUdcPoints = new List<float> ();
@@ -83,13 +67,10 @@ namespace HPGL
 
     public static class CHPGL
     {
-        public const int MAX_X_VALUE = 16640;
-        public const int MAX_Y_VALUE = 10408;
-
-        //private const int  TOGGLE_PEN = -99;
-        private const char LF         = '\x0A';
-        private const char CR         = '\x0D';
-        private const char ETX        = '\x03';
+        //const int  TOGGLE_PEN = -99;
+        const char LF         = '\x0A';
+        const char CR         = '\x0D';
+        const char ETX        = '\x03';
 
         private static char s_cLabelTerminator = ETX; // ETX
 
@@ -1393,14 +1374,6 @@ namespace HPGL
                 Console.WriteLine (strCommand);
             }
         }
-
-        public static bool AreBoxCoordinatesValid (int iBottom, int iTop, int iLeft, int iRight)
-        {
-            return (iTop   > iBottom      &&
-                    iLeft  < iRight       &&
-                    iTop   <= MAX_Y_VALUE &&
-                    iRight <= MAX_X_VALUE);
-        }
         #endregion
 
         #region DIGITIZE POINTS
@@ -1539,189 +1512,20 @@ namespace HPGL
         #endregion
 
         #region COMPLEX SHAPES
-        public static string PlotSteppedLines (Point ptLine1Start, Point ptLine1End, Point ptLine2Start, Point ptLine2End,
+#if OLD_VERSION
+        public static string DrawSteppedLines (Point ptLine1Start, Point ptLine1End, Point ptLine2Start, Point ptLine2End,
                                                int iStepCount, bool bDrawGuideLines = false)
         {
-            return PlotSteppedLines (ptLine1Start.X, ptLine1Start.Y, ptLine1End.X, ptLine1End.Y,
+            return DrawSteppedLines (ptLine1Start.X, ptLine1Start.Y, ptLine1End.X, ptLine1End.Y,
                                     ptLine2Start.X, ptLine2Start.Y, ptLine2End.X, ptLine2End.Y,
                                     iStepCount, bDrawGuideLines);
         }
 
-        #region Abandoned Refactoring Attempt
-        //public static string PlotSteppedLines (int iLine1StartX, int iLine1StartY, int iLine1EndX, int iLine1EndY,
-        //                                       int iLine2StartX, int iLine2StartY, int iLine2EndX, int iLine2EndY,
-        //                                       int iStepCount, bool bDrawGuideLines = false, WrapperBase wb = null)
-        //{
-        //    StringBuilder sbldDrawSteppedLines = new StringBuilder ();
-
-        //    int iCurrentStep  =  0;
-
-        //    int iStartX1      = -1;
-        //    int iStartY1      = -1;
-        //    int iStartX2      = -1;
-        //    int iStartY2      = -1;
-        //    int iEndX1        = -1;
-        //    int iEndY1        = -1;
-        //    int iEndX2        = -1;
-        //    int iEndY2        = -1;
-
-        //    int iJoinedPointX = 0;
-        //    int iJoinedPointY = 0;
-        //    int iEndPoint1X   = 0;
-        //    int iEndPoint1Y   = 0;
-        //    int iEndPoint2X   = 0;
-        //    int iEndPoint2Y   = 0;
-
-        //    float fDeltaX1    = 0.0F;
-        //    float fDeltaY1    = 0.0F;
-        //    float fDeltaX2    = 0.0F;
-        //    float fDeltaY2    = 0.0F;
-
-        //    // Limit coordinates to 0 through max for page
-        //    iLine1StartX = ValidateX (iLine1StartX);
-        //    iLine1EndX   = ValidateX (iLine1EndX);
-        //    iLine2StartX = ValidateX (iLine2StartX);
-        //    iLine2EndX   = ValidateX (iLine2EndX);
-
-        //    iLine1StartY = ValidateY (iLine1StartY);
-        //    iLine1EndY   = ValidateY (iLine1EndY);
-        //    iLine2StartY = ValidateY (iLine2StartY);
-        //    iLine2EndY   = ValidateY (iLine2EndY);
-
-        //    // Only where the start point of one = end point of the other, for crossing connecting lines
-        //    bool bGuideLinesJoined = (iLine1StartX == iLine2EndX   && iLine1StartY == iLine2EndY) ||
-        //                             (iLine1EndX   == iLine2StartX && iLine1EndY   == iLine2StartY);
-
-        //    // Determine upper limit on # staps
-        //    int iDistanceX1 = iLine1EndX - iLine1StartX;
-        //    int iDistanceX2 = iLine2EndX - iLine2StartX;
-        //    int iDistanceY1 = iLine1EndY - iLine1StartY;
-        //    int iDistanceY2 = iLine2EndY - iLine2StartY;
-
-        //    int iStepLimit1 = (Math.Abs (iDistanceX1) > Math.Abs (iDistanceY1)) ? Math.Abs (iDistanceX1) : Math.Abs (iDistanceY1);
-        //    int iStepLimit2 = (Math.Abs (iDistanceX2) > Math.Abs (iDistanceY2)) ? Math.Abs (iDistanceX2) : Math.Abs (iDistanceY2);
-        //    int iStepLimit  = (iStepLimit1 > iStepLimit2) ? iStepLimit1 : iStepLimit2;
-
-        //    // Limit iSteps to 2 througn ?
-        //    if (iStepCount < 2)
-        //        iStepCount = 2;
-        //    else if (iStepCount > iStepLimit)
-        //             iStepCount = iStepLimit;
-
-        //    if (bGuideLinesJoined)
-        //    {
-        //        if (iLine1StartX == iLine2EndX && iLine1StartY == iLine2EndY)
-        //        {
-        //            iJoinedPointX = iLine1StartX;
-        //            iJoinedPointY = iLine1StartY;
-
-        //            iEndPoint1X   = iLine1EndX;
-        //            iEndPoint1Y   = iLine1EndY;
-        //            iEndPoint2X   = iLine2StartX;
-        //            iEndPoint2Y   = iLine2StartY;
-        //        }
-        //        else if (iLine1EndX == iLine2StartX && iLine1EndY == iLine2StartY)
-        //        {
-        //            iJoinedPointX = iLine2StartX;
-        //            iJoinedPointY = iLine2StartY;
-
-        //            iEndPoint1X   = iLine1StartX;
-        //            iEndPoint1Y   = iLine1StartY;
-        //            iEndPoint2X   = iLine2EndX;
-        //            iEndPoint2Y   = iLine2EndY;
-        //        }
-
-        //        iStartX1 = iEndPoint1X;
-        //        iStartY1 = iEndPoint1Y;
-        //        iStartX2 = iJoinedPointX;
-        //        iStartY2 = iJoinedPointY;
-        //        iEndX1   = iJoinedPointY;
-        //        iEndY1   = iJoinedPointY;
-        //        iEndX2   = iEndPoint2X;
-        //        iEndY2   = iEndPoint2Y;
-
-        //        // Compute delta for each line end point
-        //        fDeltaX1 = ((float)iEndPoint1X - (float)iJoinedPointX) / (float)iStepCount;
-        //        fDeltaY1 = ((float)iEndPoint1Y - (float)iJoinedPointY) / (float)iStepCount;
-        //        fDeltaX2 = ((float)iJoinedPointX - (float)iEndPoint2X) / (float)iStepCount;
-        //        fDeltaY2 = ((float)iJoinedPointY - (float)iEndPoint2Y) / (float)iStepCount;
-        //    }
-        //    else
-        //    {
-        //        iStartX1 = iLine1StartX;
-        //        iStartY1 = iLine1StartY;
-        //        iStartX2 = iLine2StartX;
-        //        iStartY2 = iLine2StartY;
-        //        iEndX1   = iLine1EndX;
-        //        iEndY1   = iLine1EndY;
-        //        iEndX2   = iLine2EndX;
-        //        iEndY2   = iLine2EndY;
-
-        //        // Compute delta for each line end point
-        //        fDeltaX1 = iDistanceX1 / (iStepCount - 1);
-        //        fDeltaX2 = iDistanceX2 / (iStepCount - 1);
-        //        fDeltaY1 = iDistanceY1 / (iStepCount - 1);
-        //        fDeltaY2 = iDistanceY2 / (iStepCount - 1);
-        //    }
-
-        //    if (bDrawGuideLines)
-        //    {
-        //        sbldDrawSteppedLines.Append (PlotAbsolute (iEndX1, iEndY1));
-        //        sbldDrawSteppedLines.Append (PenDown ());
-        //        sbldDrawSteppedLines.Append (PlotAbsolute (iStartX1, iStartY1));
-        //        sbldDrawSteppedLines.Append (PlotAbsolute (iStartX2, iStartY2));
-        //        if (bDrawGuideLines)
-        //        {
-        //            sbldDrawSteppedLines.Append (PlotAbsolute (iEndX2, iEndY2));
-        //            sbldDrawSteppedLines.Append (PlotAbsolute (iEndX1, iEndY1));
-        //        }
-        //            sbldDrawSteppedLines.Append (PenUp ());
-
-        //        ++iCurrentStep;
-        //        --iStepCount;
-        //    }
-
-        //    for (int iStep = iCurrentStep; iStep < iStepCount; ++iStep)
-        //    {
-        //        int iStartX = (int)((float)iEndX1 - (fDeltaX1 * iStep));
-        //        int iStartY = (int)((float)iEndY1 - (fDeltaY1 * iStep));
-        //        int iEndX   = (int)((float)iEndX2 - (fDeltaX2 * iStep));
-        //        int iEndY   = (int)((float)iEndY2 - (fDeltaY2 * iStep));
-        //        //Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iStep, iStepCount));
-        //        //Console.WriteLine (string.Format ("From {0} x {1} -> {2} x {3}", iStartX, iStartY, iEndX, iEndY));
-
-        //        // Draw next connecting lines
-        //        if (Math.Abs (iStartX - iEndX) > 1 || Math.Abs (iStartY - iEndY) > 1)
-        //        {
-        //            //Console.WriteLine (string.Format ("{0} != {1} || {2} != {3}", iStartX, iEndX, iStartY, iEndY));
-        //            if (iStep % 2 == 0)
-        //            {
-        //                sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
-        //                sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
-        //                sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
-        //                sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
-        //            }
-        //            else
-        //            {
-        //                sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
-        //                sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
-        //                sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
-        //                sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
-        //            }
-        //        }
-        //    }
-
-        //    return sbldDrawSteppedLines.ToString ();
-        //}
-        #endregion
-
-        public static string PlotSteppedLines (int iLine1StartX, int iLine1StartY, int iLine1EndX, int iLine1EndY,
+        public static string DrawSteppedLines (int iLine1StartX, int iLine1StartY, int iLine1EndX, int iLine1EndY,
                                                int iLine2StartX, int iLine2StartY, int iLine2EndX, int iLine2EndY,
-                                               int iStepCount, bool bDrawGuideLines = false, bool bSkipFirstLine = false, WrapperBase wb = null)
+                                               int iStepCount, bool bDrawGuideLines = false, WrapperBase wb = null)
         {
             StringBuilder sbldDrawSteppedLines = new StringBuilder ();
-
-            int iCurrentStep = 0;
 
             // Limit coordinates to 0 through max for page
             iLine1StartX = ValidateX (iLine1StartX);
@@ -1734,16 +1538,18 @@ namespace HPGL
             iLine2StartY = ValidateY (iLine2StartY);
             iLine2EndY   = ValidateY (iLine2EndY);
 
+            int iDistanceX1 = Math.Abs (iLine1EndX - iLine1StartX);
+            int iDistanceX2 = Math.Abs (iLine2EndX - iLine2StartX);
+            int iDistanceY1 = Math.Abs (iLine1EndY - iLine1StartY);
+            int iDistanceY2 = Math.Abs (iLine2EndY - iLine2StartY);
+
             // Only where the start point of one = end point of the other, for crossing connecting lines
-            bool bGuideLinesJoined = (iLine1StartX == iLine2EndX   && iLine1StartY == iLine2EndY)   ||
-                                     (iLine1EndX   == iLine2StartX && iLine1EndY   == iLine2StartY);
+            bool bGuideLinesJoined = //(iLine1StartX == iLine2StartX && iLine1StartY == iLine2StartY) ||
+                                     (iLine1StartX == iLine2EndX   && iLine1StartY == iLine2EndY)   ||
+                                     (iLine1EndX   == iLine2StartX && iLine1EndY   == iLine2StartY);// ||
+                                     //(iLine1EndX   == iLine2EndX   && iLine1EndY   == iLine2EndY);
 
             // Determine upper limit on # staps
-            int iDistanceX1 = iLine1EndX - iLine1StartX;
-            int iDistanceX2 = iLine2EndX - iLine2StartX;
-            int iDistanceY1 = iLine1EndY - iLine1StartY;
-            int iDistanceY2 = iLine2EndY - iLine2StartY;
-
             int iStepLimit1 = (Math.Abs (iDistanceX1) > Math.Abs (iDistanceY1)) ? Math.Abs (iDistanceX1) : Math.Abs (iDistanceY1);
             int iStepLimit2 = (Math.Abs (iDistanceX2) > Math.Abs (iDistanceY2)) ? Math.Abs (iDistanceX2) : Math.Abs (iDistanceY2);
             int iStepLimit  = (iStepLimit1 > iStepLimit2) ? iStepLimit1 : iStepLimit2;
@@ -1754,87 +1560,150 @@ namespace HPGL
             else if (iStepCount > iStepLimit)
                 iStepCount      = iStepLimit;
 
+            int iCurrentStep = 0;
+
             if (bGuideLinesJoined)
-            #region Joined Guide Lines
             {
-                int iJoinedPointX = 0;
-                int iJoinedPointY = 0;
-                int iEndPoint1X   = 0;
-                int iEndPoint1Y   = 0;
-                int iEndPoint2X   = 0;
-                int iEndPoint2Y   = 0;
-                if (iLine1StartX == iLine2EndX && iLine1StartY == iLine2EndY)
-                {
-                    iJoinedPointX     = iLine1StartX;
-                    iJoinedPointY     = iLine1StartY;
-
-                    iEndPoint1X       = iLine1EndX;
-                    iEndPoint1Y       = iLine1EndY;
-                    iEndPoint2X       = iLine2StartX;
-                    iEndPoint2Y       = iLine2StartY;
-                }
-                else if (iLine1EndX == iLine2StartX && iLine1EndY == iLine2StartY)
-                {
-                    iJoinedPointX     = iLine2StartX;
-                    iJoinedPointY     = iLine2StartY;
-
-                    iEndPoint1X       = iLine1StartX;
-                    iEndPoint1Y       = iLine1StartY;
-                    iEndPoint2X       = iLine2EndX;
-                    iEndPoint2Y       = iLine2EndY;
-                }
-
                 // Compute delta for each line end point
-                float fDeltaX1 = ((float)iEndPoint1X - (float)iJoinedPointX) / (float)iStepCount;
-                float fDeltaY1 = ((float)iEndPoint1Y - (float)iJoinedPointY) / (float)iStepCount;
-                float fDeltaX2 = ((float)iJoinedPointX - (float)iEndPoint2X) / (float)iStepCount;
-                float fDeltaY2 = ((float)iJoinedPointY - (float)iEndPoint2Y) / (float)iStepCount;
+                float fDeltaX1 = iDistanceX1 / iStepCount;
+                float fDeltaX2 = iDistanceX2 / iStepCount;
+                float fDeltaY1 = iDistanceY1 / iStepCount;
+                float fDeltaY2 = iDistanceY2 / iStepCount;
 
-                if (bDrawGuideLines)
+                bool bLine1IncreasesX = (iLine1EndX > iLine1StartX);
+                bool bLine1DecreasesX = (iLine1EndX < iLine1StartX);
+                bool bLine1IncreasesY = (iLine1EndY > iLine1StartY);
+                bool bLine1DecreasesY = (iLine1EndY < iLine1StartY);
+
+                bool bLine2IncreasesX = (iLine2EndX > iLine2StartX);
+                bool bLine2DecreasesX = (iLine2EndX < iLine2StartX);
+                bool bLine2IncreasesY = (iLine2EndY > iLine2StartY);
+                bool bLine2DecreasesY = (iLine2EndY < iLine2StartY);
+
+                if (bDrawGuideLines) // Guide lines joined start of one to end of the other
                 {
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iEndPoint1X, iEndPoint1Y));
-                    sbldDrawSteppedLines.Append (PenDown ());
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iJoinedPointX, iJoinedPointY));
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iEndPoint2X, iEndPoint2Y));
-                    sbldDrawSteppedLines.Append (PenUp ());
+                    // Draw line 1 from endpoint to starting point (do not lift pen)                   iLine1EndX / iLine1EndY     -> iLine1StartX / iLine1StartY
+                    wb.WriteTextString (PlotAbsolute (iLine1EndX, iLine1EndY));     // Move pen to end of guide line 1
+                    wb.WriteTextString (PenDown ());                                // Pen down                           Start drawing
+                    wb.WriteTextString (PlotAbsolute (iLine1StartX, iLine1StartY)); // Move pen to start of guide line 1    Draw guide line 1
+
+                    // Draw first connecting line from line 1 start point to line 2 (do not lift pen)  iLine1StartX / iLine1StartY -> iLine2StartX / iLine2StartY
+                    wb.WriteTextString (PlotAbsolute (iLine2StartX, iLine2StartY)); // Move pen to start of guide line 2  Draw first connecting line
+
+                    // Draw line 2 from end of first connecting line to other end (do not lift pen)    iLine2StartX / iLine2StartY -> iLine2EndX / iLine2EndY
+                    //if (!bGuideLinesJoined)
+                    //{
+                    //    sbldDrawSteppedLines.Append (PlotAbsolute (iLine2EndX, iLine2EndY)); // Move pen to end of guide line 2    Draw guide line 2
+
+                    //    // Draw last connecting line from current pen location to other end (now lift pen) iLine2EndX / iLine2EndY -> iLine1EndX / iLine1EndY
+                    //    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY)); // Move pen to end of guide line 1    Draw last connecting line
+                    //}
+
+                    wb.WriteTextString (PenUp ());                                  // Pen up                             Drawing finished, get ready for next connecting line
+
+                    // Set status: first and last connecting lines drawn
+                    //++iCurrentStep;
+                    //--iStepCount;
                 }
 
-                for (int iLineStep = 0; iLineStep < iStepCount; ++iLineStep)
+                for (int iLineStep = 0; iLineStep < iStepCount; ++iStepCount)
                 {
-                    if (bSkipFirstLine)
+                    // 0, 1000 -> 3000, 0
+                    // 0, 2000 -> 2000, 0
+                    // 0, 3000 -> 1000, 0
+                    int iStartX = 0;
+                    int iStartY = 0;
+                    int iEndX   = 0;
+                    int iEndY   = 0;
+
+                    ////////////////////////////////
+                    // Both X and Y of both lines go from start values to end values, increasing or decreasing !!!
+                    ////////////////////////////////
+                    if (bLine1IncreasesX)
                     {
-                        bSkipFirstLine = false;
-                        continue;
+                        iStartX = (int)((float)iLine1StartX + (fDeltaX1 * iLineStep));
+                    }
+                    else if (bLine1DecreasesX)
+                    {
+                        iStartX = (int)((float)iLine1EndX - (fDeltaX1 * (iLineStep + 1)));
                     }
 
-                    // From joined point out to endpoint 1
-                    int iPoint1X = (int)((float)iJoinedPointX + (fDeltaX1 * (iLineStep + 1)));
-                    int iPoint1Y = (int)((float)iJoinedPointY + (fDeltaY1 * (iLineStep + 1)));
-
-                    // From endpoint 2 in to joined point
-                    int iPoint2X = (int)((float)iEndPoint2X + (fDeltaX2 * iLineStep));
-                    int iPoint2Y = (int)((float)iEndPoint2Y + (fDeltaY2 * iLineStep));
-
-                    if (iLineStep % 2 > 0)
+                    if (bLine1IncreasesY)
                     {
-                        sbldDrawSteppedLines.Append (PlotAbsolute (iPoint1X, iPoint1Y));
-                        sbldDrawSteppedLines.Append (PenDown ());
-                        sbldDrawSteppedLines.Append (PlotAbsolute (iPoint2X, iPoint2Y));
+                        iStartY = (int)((float)iLine1EndY + (fDeltaY1 * iLineStep));
                     }
-                    else
+                    else if (bLine1DecreasesY)
                     {
-                        sbldDrawSteppedLines.Append (PlotAbsolute (iPoint2X, iPoint2Y));
-                        sbldDrawSteppedLines.Append (PenDown ());
-                        sbldDrawSteppedLines.Append (PlotAbsolute (iPoint1X, iPoint1Y));
+                        iStartY = (int)((float)iLine1StartY - (fDeltaY1 * (iLineStep)));
                     }
-                    sbldDrawSteppedLines.Append (PenUp ());
 
-                    //Console.WriteLine (string.Format ("iLineStep: {0}, StepCount: {1}", iLineStep, iStepCount));
-                    //Console.WriteLine (string.Format ("From {0} x {1} -> {2} x {3}", iPoint1X, iPoint1Y, iPoint2X, iPoint2Y));
+                    if (bLine2IncreasesX)
+                    {
+                        iStartX = (int)((float)iLine2StartX + (fDeltaX2 * (iLineStep + 1)));
+                    }
+                    else if (bLine2DecreasesX)
+                    {
+                        iStartX = (int)((float)iLine2EndX - (fDeltaX2 * (iLineStep + 1)));
+                    }
+
+                    if (bLine2IncreasesY)
+                    {
+                        iStartY = (int)((float)iLine2EndY + (fDeltaY2 * iLineStep + 1));
+                    }
+                    else if (bLine2DecreasesY)
+                    {
+                        iStartY = (int)((float)iLine2StartY - (fDeltaY2 * (iLineStep + 1)));
+                    }
+
+                    //wb.WriteTextString (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                    //wb.WriteTextString (PenDown ());                                // Pen down
+                    //wb.WriteTextString (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                    //wb.WriteTextString (PenUp ());                                  // Pen up
+                    Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                    Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                }
+
+                while (iCurrentStep < iStepCount)
+                {
+                    // Calculate starting and ending points of next connecting line
+                    //int iStepFactor = iStepCount - 1;
+                    int iStartX = (int)((float)iLine1EndX - (fDeltaX1 * (iStepCount - 1)));
+                    int iStartY = (int)((float)iLine1EndY - (fDeltaY1 * (iStepCount - 1)));
+                    int iEndX   = (int)((float)iLine2EndX - (fDeltaX2 * (iStepCount - 1)));
+                    int iEndY   = (int)((float)iLine2EndY - (fDeltaY2 * (iStepCount - 1)));
+                    // 0, 1000 -> 3000, 0
+                    // 0, 2000 -> 2000, 0
+                    // 0, 3000 -> 1000, 0
+
+                    // Draw next connecting lines
+                    wb.WriteTextString (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                    wb.WriteTextString (PenDown ());                                // Pen down
+                    wb.WriteTextString (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                    wb.WriteTextString (PenUp ());                                  // Pen up
+                    Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                    Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                    --iStepCount;                                                            // Decrement step count
+
+                    if (iCurrentStep < iStepCount)
+                    {
+                        // Calculate starting and ending points of next connecting line
+                        iStartX = (int)((float)iLine2EndX - (fDeltaX2 * (iStepCount - 1)));
+                        iStartY = (int)((float)iLine2EndY - (fDeltaY2 * (iStepCount - 1)));
+                        iEndX   = (int)((float)iLine1EndX - (fDeltaX1 * (iStepCount - 1)));
+                        iEndY   = (int)((float)iLine1EndY - (fDeltaY1 * (iStepCount - 1)));
+
+                        // Draw next connecting lines
+                        wb.WriteTextString (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                        wb.WriteTextString (PenDown ());                                // Pen down
+                        wb.WriteTextString (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                        wb.WriteTextString (PenUp ());                                  // Pen up
+                        Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                        Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                        --iStepCount;                                                            // Decrement step count
+                    }
                 }
             }
-            #endregion
-            else
+            else // Guide lines not joined start of one to end of the other
             {
                 // Compute delta for each line end point
                 float fDeltaX1 = iDistanceX1 / (iStepCount - 1);
@@ -1844,760 +1713,194 @@ namespace HPGL
 
                 if (bDrawGuideLines)
                 {
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY));
-                    sbldDrawSteppedLines.Append (PenDown ());
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1StartX, iLine1StartY));
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine2StartX, iLine2StartY));
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine2EndX, iLine2EndY));
-                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY));
-                    sbldDrawSteppedLines.Append (PenUp ());
+                    // Draw line 1 from endpoint to starting point (do not lift pen)                   iLine1EndX / iLine1EndY     -> iLine1StartX / iLine1StartY
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY));     // Move pen to end of guide line 1
+                    sbldDrawSteppedLines.Append (PenDown ());                                // Pen down                           Start drawing
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1StartX, iLine1StartY)); // Move pen to start of guide line 1    Draw guide line 1
 
+                    // Draw first connecting line from line 1 start point to line 2 (do not lift pen)  iLine1StartX / iLine1StartY -> iLine2StartX / iLine2StartY
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine2StartX, iLine2StartY)); // Move pen to start of guide line 2  Draw first connecting line
+
+                    // Draw line 2 from end of first connecting line to other end (do not lift pen)    iLine2StartX / iLine2StartY -> iLine2EndX / iLine2EndY
+                    //if (!bGuideLinesJoined)
+                    //{
+                        sbldDrawSteppedLines.Append (PlotAbsolute (iLine2EndX, iLine2EndY)); // Move pen to end of guide line 2    Draw guide line 2
+
+                        // Draw last connecting line from current pen location to other end (now lift pen) iLine2EndX / iLine2EndY -> iLine1EndX / iLine1EndY
+                        sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY)); // Move pen to end of guide line 1    Draw last connecting line
+                    //}
+
+                    sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up                             Drawing finished, get ready for next connecting line
+
+                    // Set status: first and last connecting lines drawn
                     ++iCurrentStep;
                     --iStepCount;
                 }
 
-                for (int iStep = iCurrentStep; iStep < iStepCount; ++iStep)
+                //for (int iLineStep = 0; iLineStep >= iStepCount; ++iStepCount)
+                while (iCurrentStep < iStepCount)
                 {
-                    if (bSkipFirstLine)
-                    {
-                        bSkipFirstLine = false;
-                        continue;
-                    }
-
-                    int iStartX = (int)((float)iLine1EndX - (fDeltaX1 * iStep));
-                    int iStartY = (int)((float)iLine1EndY - (fDeltaY1 * iStep));
-                    int iEndX   = (int)((float)iLine2EndX - (fDeltaX2 * iStep));
-                    int iEndY   = (int)((float)iLine2EndY - (fDeltaY2 * iStep));
-                    //Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iStep, iStepCount));
-                    //Console.WriteLine (string.Format ("From {0} x {1} -> {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                    // Calculate starting and ending points of next connecting line
+                    //int iStepFactor = iStepCount - 1;
+                    int iStartX = (int)((float)iLine1EndX - (fDeltaX1 * (iStepCount - 1))); //iCurrentStep));
+                    int iStartY = (int)((float)iLine1EndY - (fDeltaY1 * (iStepCount - 1))); //iCurrentStep));
+                    int iEndX = (int)((float)iLine2EndX - (fDeltaX2 * (iStepCount - 1))); //iCurrentStep));
+                    int iEndY = (int)((float)iLine2EndY - (fDeltaY2 * (iStepCount - 1))); //iCurrentStep));
 
                     // Draw next connecting lines
-                    if (Math.Abs (iStartX - iEndX) > 1 || Math.Abs (iStartY - iEndY) > 1)
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                    sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                    sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
+                    Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                    Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                    --iStepCount;                                                            // Decrement step count
+
+                    if (iCurrentStep < iStepCount)
                     {
-                        //Console.WriteLine (string.Format ("{0} != {1} || {2} != {3}", iStartX, iEndX, iStartY, iEndY));
-                        if (iStep % 2 > 0)
-                        {
-                            sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
-                            sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
-                            sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
-                            sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
-                        }
-                        else
-                        {
-                            sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
-                            sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
-                            sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
-                            sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
-                        }
+                        // Calculate starting and ending points of next connecting line
+                        iStartX = (int)((float)iLine2EndX - (fDeltaX2 * (iStepCount - 1))); //iCurrentStep));
+                        iStartY = (int)((float)iLine2EndY - (fDeltaY2 * (iStepCount - 1))); //iCurrentStep));
+                        iEndX = (int)((float)iLine1EndX - (fDeltaX1 * (iStepCount - 1))); //iCurrentStep));
+                        iEndY = (int)((float)iLine1EndY - (fDeltaY1 * (iStepCount - 1))); //iCurrentStep));
+
+                        // Draw next connecting lines
+                        sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                        sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
+                        sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                        sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
+                        Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                        Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                        --iStepCount;                                                            // Decrement step count
                     }
                 }
             }
 
             return sbldDrawSteppedLines.ToString ();
         }
-
-        public static void PlotPoints (Point[] aptPlotPoints, EPenSelect ePenSelection = EPenSelect.ESelectPen1, bool bSerial = true, bool bLastAction = true)
+#else
+        public static string DrawSteppedLines (int iLine1StartX, int iLine1StartY, int iLine1EndX, int iLine1EndY,
+                                               int iLine2StartX, int iLine2StartY, int iLine2EndX, int iLine2EndY,
+                                               int iStepCount, bool bDrawGuideLines = false)
         {
-            if (aptPlotPoints.Length > 2)
+            StringBuilder sbldDrawSteppedLines = new StringBuilder ();
+
+            // Limit coordinates to 0 through max for page
+            iLine1StartX = ValidateX (iLine1StartX);
+            iLine1EndX   = ValidateX (iLine1EndX);
+            iLine2StartX = ValidateX (iLine2StartX);
+            iLine2EndX   = ValidateX (iLine2EndX);
+
+            iLine1StartY = ValidateY (iLine1StartY);
+            iLine1EndY   = ValidateY (iLine1EndY);
+            iLine2StartY = ValidateY (iLine2StartY);
+            iLine2EndY   = ValidateY (iLine2EndY);
+
+            int iDistanceX1 = iLine1EndX - iLine1StartX;
+            int iDistanceX2 = iLine2EndX - iLine2StartX;
+            int iDistanceY1 = iLine1EndY - iLine1StartY;
+            int iDistanceY2 = iLine2EndY - iLine2StartY;
+
+            bool bGuideLinesJoined = //(iLine1StartX == iLine2StartX && iLine1StartY == iLine2StartY) ||
+                                     (iLine1StartX == iLine2EndX   && iLine1StartY == iLine2EndY)   ||
+                                     (iLine1EndX   == iLine2StartX && iLine1EndY   == iLine2StartY);// ||
+                                     //(iLine1EndX   == iLine2EndX   && iLine1EndY   == iLine2EndY);
+
+            // Determine upper limit on # staps
+            int iStepLimit1 = (Math.Abs (iDistanceX1) > Math.Abs (iDistanceY1)) ? Math.Abs (iDistanceX1) : Math.Abs (iDistanceY1);
+            int iStepLimit2 = (Math.Abs (iDistanceX2) > Math.Abs (iDistanceY2)) ? Math.Abs (iDistanceX2) : Math.Abs (iDistanceY2);
+            int iStepLimit  = (iStepLimit1 > iStepLimit2) ? iStepLimit1 : iStepLimit2;
+
+            // Limit iSteps to 2 througn ?
+            if (iStepCount < 2)
+                iStepCount = 2;
+            else if (iStepCount > iStepLimit)
+                iStepCount      = iStepLimit;
+
+            int iCurrentStep = 0;
+
+            // Compute delta for each line end point
+            float fDeltaX1 = iDistanceX1 / (iStepCount - 1);
+            float fDeltaX2 = iDistanceX2 / (iStepCount - 1);
+            float fDeltaY1 = iDistanceY1 / (iStepCount - 1);
+            float fDeltaY2 = iDistanceY2 / (iStepCount - 1);
+            //float fDeltaX1 = iDistanceX1 / (iStepCount + (bGuideLinesJoined ? 1 : 0));
+            //float fDeltaX2 = iDistanceX2 / (iStepCount + (bGuideLinesJoined ? 1 : 0));
+            //float fDeltaY1 = iDistanceY1 / (iStepCount + (bGuideLinesJoined ? 1 : 0));
+            //float fDeltaY2 = iDistanceY2 / (iStepCount + (bGuideLinesJoined ? 1 : 0));
+
+            if (bDrawGuideLines)
             {
-                // Initialize
-                WrapperBase wb = null;
+                // Draw line 1 from endpoint to starting point (do not lift pen)                   iLine1EndX / iLine1EndY     -> iLine1StartX / iLine1StartY
+                sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY));     // Move pen to end of guide line 1
+                sbldDrawSteppedLines.Append (PenDown ());                                // Pen down                           Start drawing
+                sbldDrawSteppedLines.Append (PlotAbsolute (iLine1StartX, iLine1StartY)); // Move pen to start of guide line 1    Draw guide line 1
 
-                if (bSerial)
+                // Draw first connecting line from line 1 start point to line 2 (do not lift pen)  iLine1StartX / iLine1StartY -> iLine2StartX / iLine2StartY
+                sbldDrawSteppedLines.Append (PlotAbsolute (iLine2StartX, iLine2StartY)); // Move pen to start of guide line 2  Draw first connecting line
+
+                // Draw line 2 from end of first connecting line to other end (do not lift pen)    iLine2StartX / iLine2StartY -> iLine2EndX / iLine2EndY
+                //if (!bGuideLinesJoined)
+                //{
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine2EndX, iLine2EndY)); // Move pen to end of guide line 2    Draw guide line 2
+
+                    // Draw last connecting line from current pen location to other end (now lift pen) iLine2EndX / iLine2EndY -> iLine1EndX / iLine1EndY
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iLine1EndX, iLine1EndY)); // Move pen to end of guide line 1    Draw last connecting line
+                //}
+                sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up                             Drawing finished, get ready for next connecting line
+
+                // Set status: first and last connecting lines drawn
+                //if (!bGuideLinesJoined)
+                //{
+                    ++iCurrentStep;
+                    --iStepCount;
+                //}
+            }
+
+            //for (int iLineStep = 0; iLineStep >= iStepCount; ++iStepCount)
+            while (iCurrentStep < iStepCount)
+            {
+                // Calculate starting and ending points of next connecting line
+                int iStartX = (int)((float)iLine1EndX - (fDeltaX1 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+                int iStartY = (int)((float)iLine1EndY - (fDeltaY1 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+                int iEndX   = (int)((float)iLine2EndX - (fDeltaX2 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+                int iEndY   = (int)((float)iLine2EndY - (fDeltaY2 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+
+                // Draw next connecting lines
+                sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
+                sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
+                //Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                //Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                --iStepCount;                                                            // Decrement step count
+
+                if (iCurrentStep < iStepCount)
                 {
-                    wb = new SerialWrapper ();
-                }
-                else
-                {
-                    wb = new ParallelWrapper ();
-                }
+                    // Calculate starting and ending points of next connecting line
+                    iStartX = (int)((float)iLine2EndX - (fDeltaX2 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+                    iStartY = (int)((float)iLine2EndY - (fDeltaY2 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+                    iEndX   = (int)((float)iLine1EndX - (fDeltaX1 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
+                    iEndY   = (int)((float)iLine1EndY - (fDeltaY1 * iStepCount - (bGuideLinesJoined ? 1 : 0)));
 
-                if (ePenSelection == EPenSelect.ESelectPenRandom)
-                {
-                    List<EPenSelect> lePens = CPlotterShapes.CreatePenList (true, 3);
-                    ePenSelection = lePens[0];
-                }
-
-                StringBuilder sbldPlotterCommands = new StringBuilder ();
-
-                wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen ((int)ePenSelection));
-
-                for (int iIdx = 0; iIdx < aptPlotPoints.Length; ++iIdx)
-                {
-                    Point pt = aptPlotPoints[iIdx];
-                    sbldPlotterCommands.Append (CHPGL.PlotAbsolute (pt.X, pt.Y));
-
-                    if (iIdx == 0)
-                    {
-                        sbldPlotterCommands.Append (CHPGL.PenDown ());
-                    }
-                }
-
-                // Clean up
-                sbldPlotterCommands.Append (CHPGL.PenUp ());
-                if (bLastAction)
-                {
-                    sbldPlotterCommands.Append (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
-                }
-
-                wb.WriteTextString (sbldPlotterCommands.ToString ());
-
-                if (bLastAction &&
-                    wb.IsSerial ())
-                {
-                    wb.CloseOutputPort ();
+                    // Draw next connecting lines
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iStartX, iStartY));           // Move pen to start of next connecting line
+                    sbldDrawSteppedLines.Append (PenDown ());                                // Pen down
+                    sbldDrawSteppedLines.Append (PlotAbsolute (iEndX, iEndY));               // Draw next connecting line
+                    sbldDrawSteppedLines.Append (PenUp ());                                  // Pen up
+                    //Console.WriteLine (string.Format ("CurrentStep: {0}, StepCount: {1}", iCurrentStep, iStepCount));
+                    //Console.WriteLine (string.Format ("From {0} x {1}  To {2} x {3}", iStartX, iStartY, iEndX, iEndY));
+                    --iStepCount;                                                            // Decrement step count
                 }
             }
+
+            return sbldDrawSteppedLines.ToString ();
         }
-
-        public static void PlotPoints (Point[] aptPlotPoints, WrapperBase wb, EPenSelect ePenSelection = EPenSelect.ESelectPen1)
-        {
-            if (aptPlotPoints.Length > 2)
-            {
-                // Initialize
-
-                StringBuilder sbldPlotterCommands = new StringBuilder ();
-
-                wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen ((int)ePenSelection));
-
-                for (int iIdx = 0; iIdx < aptPlotPoints.Length; ++iIdx)
-                {
-                    Point pt = aptPlotPoints[iIdx];
-                    sbldPlotterCommands.Append (CHPGL.PlotAbsolute (pt.X, pt.Y));
-
-                    if (iIdx == 0)
-                    {
-                        sbldPlotterCommands.Append (CHPGL.PenDown ());
-                    }
-                }
-
-                sbldPlotterCommands.Append (CHPGL.PenUp ());
-
-                wb.WriteTextString (sbldPlotterCommands.ToString ());
-            }
-        }
+#endif
         #endregion
     }
 
     public static class CPlotterShapes
     {
-        public static List<EPenSelect> CreatePenList (bool bRandomize = false, int iMaxPenCount = 8)
-        {
-            List<EPenSelect> liOrderedPens = new List<EPenSelect> ();
-            List<EPenSelect> liRandomPens  = new List<EPenSelect> ();
-
-            for (int iIdx = 1; iIdx <= iMaxPenCount; ++iIdx)
-            {
-                liOrderedPens.Add ((EPenSelect)iIdx);
-            }
-
-            if (bRandomize)
-            {
-                DateTime dtNow = DateTime.Now;
-                Random rand = new Random (dtNow.Millisecond);
-
-                while (liOrderedPens.Count > 1)
-                {
-                    int iIdx = rand.Next (liOrderedPens.Count - 1);
-                    liRandomPens.Add (liOrderedPens[iIdx]);
-                    liOrderedPens.RemoveAt (iIdx);
-                }
-                liRandomPens.Add (liOrderedPens[0]);
-                liOrderedPens.RemoveAt (0);
-
-                return liRandomPens;
-            }
-
-            return liOrderedPens;
-        }
-
-        public static void DrawFourQuadrants (int iBottomLeftX, int iBottomLeftY, int iTopRightX, int iTopRightY, int iStepCount,
-                                       EPenSelect eOuterCirclePen, bool bDrawOuterCircleGuideLines,
-                                       EPenSelect eInnerSpikePen,  bool bDrawInnerSpikeGuideLines,
-                                       EPenSelect eOuterSpkePen,   bool bDrawOuterSpikeGuideLines, bool bSerial)
-        {
-            // If either iTopRightX or iTopRightY are negative, their absolute values
-            // are used to determine height and width instead of plot coordinates
-            if (iTopRightX < 0)
-            {
-                iTopRightX  = iTopRightX * -1;
-                iTopRightX += iBottomLeftX;
-            }
-
-            if (iTopRightY < 0)
-            {
-                iTopRightY  = iTopRightY * -1;
-                iTopRightY += iBottomLeftY;
-            }
-
-            if (iBottomLeftX < iTopRightX         &&
-                iBottomLeftY < iTopRightY         &&
-                (eOuterCirclePen != EPenSelect.ESelectNoPen ||
-                 eInnerSpikePen  != EPenSelect.ESelectNoPen ||
-                 eOuterSpkePen   != EPenSelect.ESelectNoPen))
-            {
-                int iTop          = iTopRightY;
-                int iBottom       = iBottomLeftY;
-                int iLeft         = iBottomLeftX;
-                int iRight        = iTopRightX;
-                int iWidth        = (iTopRightX - iBottomLeftX);
-                int iHeight       = (iTopRightY - iBottomLeftY);
-                int iCenterWidth  = iBottomLeftX + (iWidth  / 2);
-                int iCenterHeight = iBottomLeftY + (iHeight / 2);
-
-                Point ptTopLeft      = new Point (iLeft,        iTop);
-                Point ptTopCenter    = new Point (iCenterWidth, iTop);
-                Point ptTopRight     = new Point (iRight,       iTop);
-                Point ptLeftCenter   = new Point (iLeft,        iCenterHeight);
-                Point ptCenterXY     = new Point (iCenterWidth, iCenterHeight);
-                Point ptRightCenter  = new Point (iRight,       iCenterHeight);
-                Point ptBottomLeft   = new Point (iLeft,        iBottom);
-                Point ptBottomCenter = new Point (iCenterWidth, iBottom);
-                Point ptBottomRight  = new Point (iRight,       iBottom);
-
-                List<EPenSelect> lpenOrdered = CreatePenList ();
-                List<EPenSelect> lpenRandom  = CreatePenList (true);
-
-                WrapperBase wb = null;
-
-                if (bSerial)
-                {
-                    wb = new SerialWrapper ();
-                }
-                else
-                {
-                    wb = new ParallelWrapper ();
-                }
-
-                wb.WriteTextString (CHPGL.Initialize ());
-
-                string strPlotSteppedLines = "";
-
-                if (eOuterCirclePen != EPenSelect.ESelectNoPen)
-                {
-                    // Draw ourter cirle 1
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[0] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[0]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopCenter, ptTopLeft, ptTopLeft,   ptLeftCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw ourter cirle 2
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[1] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[1]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopCenter, ptTopRight, ptTopRight,  ptRightCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw ourter cirle 3
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[2] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[2]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptRightCenter, ptBottomRight, ptBottomRight, ptBottomCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw ourter cirle 4
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[3] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[3]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomCenter, ptBottomLeft, ptBottomLeft, ptLeftCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-                }
-
-                if (eInnerSpikePen != EPenSelect.ESelectNoPen)
-                {
-                    // Draw inner spike 1
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[4] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[4]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptLeftCenter, ptCenterXY, ptCenterXY, ptTopCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw inner spike 2
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[5] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[5]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopCenter, ptCenterXY, ptCenterXY, ptRightCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw inner spike 3
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[6] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[6]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptRightCenter, ptCenterXY, ptCenterXY, ptBottomCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw inner spike 4
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[7] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[7]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomCenter, ptCenterXY, ptCenterXY, ptLeftCenter,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-                }
-
-                if (eOuterSpkePen != EPenSelect.ESelectNoPen)
-                {
-                    // Draw outer spike 1 (top left)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[0] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[0]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopLeft, ptTopCenter, ptTopCenter, ptCenterXY,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 2 (top right)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[1] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[1]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptTopCenter, ptTopCenter, ptTopRight,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 3 (right center top)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[2] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[2]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopRight, ptRightCenter, ptRightCenter, ptCenterXY,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 4 (right center bottom)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[3] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[3]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptRightCenter, ptRightCenter, ptBottomRight,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 5 (bottom right)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[4] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[4]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomRight, ptBottomCenter, ptBottomCenter, ptCenterXY,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 6 (bottom left)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[5] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[5]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptBottomCenter, ptBottomCenter, ptBottomLeft,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 7 (left center bottom)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[6] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[6]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomLeft, ptLeftCenter, ptLeftCenter, ptCenterXY,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-
-                    // Draw outer spike 8 (left center top)
-                    wb.WriteTextString (CHPGL.SelectPen ((eOuterCirclePen == EPenSelect.ESelectAllPens)   ? (int)lpenOrdered[7] :
-                                                         (eOuterCirclePen == EPenSelect.ESelectPenRandom) ? (int)lpenRandom[7]  : (int)eOuterCirclePen));
-                    strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptLeftCenter, ptLeftCenter, ptTopLeft,
-                                                                  iStepCount, bDrawOuterCircleGuideLines);
-                    wb.WriteTextString (strPlotSteppedLines);
-                }
-
-                wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
-
-                if (wb.IsSerial ())
-                {
-                    wb.CloseOutputPort ();
-                }
-            }
-        }
-
-        public static void DrawThickFrame (int iBottom, int iTop, int iLeft, int iRight, int iThickness = 5, EPenSelect ePenSelection = EPenSelect.ESelectPen1,
-                                           bool bSerial = true, bool bLastAction = true)
-        {
-            if (CHPGL.AreBoxCoordinatesValid (iBottom, iTop, iLeft, iRight) &&
-                iThickness       > 0                                        &&
-                iTop   - iBottom > iThickness                               &&
-                iRight - iLeft   > iThickness                               &&
-                ePenSelection != EPenSelect.ESelectNoPen)
-            {
-                WrapperBase wb = null;
-
-                if (bSerial)
-                {
-                    wb = new SerialWrapper ();
-                }
-                else
-                {
-                    wb = new ParallelWrapper ();
-                }
-
-                wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen ((int)ePenSelection));
-
-                int iDelta = 7;
-
-                while (iThickness-- > 0)
-                {
-                    wb.WriteTextString (CHPGL.PlotAbsolute (iLeft,  iBottom));
-                    wb.WriteTextString (CHPGL.PenDown ());
-                    wb.WriteTextString (CHPGL.PlotAbsolute (iLeft,  iTop));
-                    wb.WriteTextString (CHPGL.PlotAbsolute (iRight, iTop));
-                    wb.WriteTextString (CHPGL.PlotAbsolute (iRight, iBottom));
-                    wb.WriteTextString (CHPGL.PlotAbsolute (iLeft,  iBottom));
-
-                    iBottom += iDelta;
-                    iTop    -= iDelta;
-                    iLeft   += iDelta;
-                    iRight  -= iDelta;
-                }
-
-                wb.WriteTextString (CHPGL.PenUp ());
-
-                if (bLastAction)
-                {
-                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
-
-                    if (wb.IsSerial ())
-                    {
-                        wb.CloseOutputPort ();
-                    }
-                }
-            }
-        }
-
-        public static void DrawRadialLines (int iBottom, int iTop, int iLeft, int iRight, int iStepCount, int iThickness, EPenSelect ePenSelection, bool bSerial, bool bLastAction = true)
-        {
-            if (CHPGL.AreBoxCoordinatesValid (iBottom, iTop, iLeft, iRight))
-            {
-                int iWidth        = iRight - iLeft;
-                int iHeight       = iTop   - iBottom;
-                int iCenterWidth  = iWidth / 2;
-                int iCenterHeight = iHeight / 2;
-
-                WrapperBase wb = null;
-
-                if (bSerial)
-                {
-                    wb = new SerialWrapper ();
-                }
-                else
-                {
-                    wb = new ParallelWrapper ();
-                }
-
-                wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen ((int)ePenSelection));
-
-                if (iThickness > 0)
-                {
-                    DrawThickFrame (iBottom, iTop, iLeft, iRight, iThickness, ePenSelection, bSerial, false);
-                }
-
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iLeft,  iTop,    iRight, iTop,    iCenterWidth, iCenterHeight, iCenterWidth, iCenterHeight, iStepCount, false, true));
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iLeft,  iBottom, iLeft,  iTop,    iCenterWidth, iCenterHeight, iCenterWidth, iCenterHeight, iStepCount, false, true));
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iLeft,  iBottom, iRight, iBottom, iCenterWidth, iCenterHeight, iCenterWidth, iCenterHeight, iStepCount, false, true));
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iRight, iBottom, iRight, iTop,    iCenterWidth, iCenterHeight, iCenterWidth, iCenterHeight, iStepCount, false, true));
-
-                if (bLastAction)
-                {
-                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
-
-                    if (wb.IsSerial ())
-                    {
-                        wb.CloseOutputPort ();
-                    }
-                }
-            }
-        }
-
-        public static void DrawTriangle (int iPoint1X, int iPoint1Y, int iPoint2X, int iPoint2Y, int iPoint3X, int iPoint3Y,
-                                         int iStepCount, EPenSelect ePenSelection = EPenSelect.ESelectPen1, bool bSerial = true, bool bLastAction = true)
-        {
-            if (iPoint1X <= CHPGL.MAX_X_VALUE &&
-                iPoint1Y <= CHPGL.MAX_Y_VALUE &&
-                iPoint2X <= CHPGL.MAX_X_VALUE &&
-                iPoint2Y <= CHPGL.MAX_Y_VALUE &&
-                iPoint3X <= CHPGL.MAX_X_VALUE &&
-                iPoint3Y <= CHPGL.MAX_Y_VALUE &&
-                (iPoint1X != iPoint2X || iPoint1Y != iPoint2Y) &&
-                (iPoint1X != iPoint3X || iPoint1Y != iPoint3Y))
-            {
-                WrapperBase wb = null;
-
-                if (bSerial)
-                {
-                    wb = new SerialWrapper ();
-                }
-                else
-                {
-                    wb = new ParallelWrapper ();
-                }
-
-                EPenSelect ePenSelect1 = EPenSelect.ESelectPen1;
-                EPenSelect ePenSelect2 = EPenSelect.ESelectPen1;
-                EPenSelect ePenSelect3 = EPenSelect.ESelectPen1;
-
-                if (ePenSelection == EPenSelect.ESelectAllPens)
-                {
-                    ePenSelect1 = EPenSelect.ESelectPen1;
-                    ePenSelect2 = EPenSelect.ESelectPen2;
-                    ePenSelect3 = EPenSelect.ESelectPen3;
-                }
-
-                if (ePenSelection == EPenSelect.ESelectPenRandom)
-                {
-                    List<EPenSelect> lePens = CreatePenList (true, 3);
-                    ePenSelect1 = lePens[0];
-                    ePenSelect2 = lePens[1];
-                    ePenSelect3 = lePens[2];
-                }
-
-                wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen ((int)ePenSelect1));
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iPoint1X, iPoint1Y, iPoint2X, iPoint2Y, iPoint2X, iPoint2Y, iPoint3X, iPoint3Y, iStepCount));
-
-                wb.WriteTextString (CHPGL.SelectPen ((int)ePenSelect2));
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iPoint2X, iPoint2Y, iPoint3X, iPoint3Y, iPoint3X, iPoint3Y, iPoint1X, iPoint1Y, iStepCount));
-
-                wb.WriteTextString (CHPGL.SelectPen ((int)ePenSelect3));
-                wb.WriteTextString (CHPGL.PlotSteppedLines (iPoint3X, iPoint3Y, iPoint1X, iPoint1Y, iPoint1X, iPoint1Y, iPoint2X, iPoint2Y, iStepCount));
-
-                if (bLastAction)
-                {
-                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
-
-                    if (wb.IsSerial ())
-                    {
-                        wb.CloseOutputPort ();
-                    }
-                }
-            }
-        }
-
-        public static Point[] PlotSineWave (int iZeroLineY, int iWaveLength, int iAmplitude, int iStartX, int iEndX,
-                                            int iStartDegree = 0, int iResolution = 10, bool bInvertPhase = false)
-        {
-            // Validate arguments
-            if (iWaveLength < 1)
-            {
-                iWaveLength = 1;
-            }
-
-            if (iAmplitude < 1)
-            {
-                iAmplitude = 1000;
-            }
-
-            if (iResolution < 1)
-            {
-                iResolution = 1;
-            }
-
-            iAmplitude /= 2; // Convert values to peak-to-peak
-
-            // Initialize
-            List<Point> lptSinePoints = new List<Point> ();
-            double dAngleStep = 360 / (double)iWaveLength;
-
-            iStartDegree %= 360;
-            if (iStartDegree < 0)
-            {
-                iStartDegree += 360;
-            }
-
-            for (int iXAxis = iStartX; iXAxis <= iEndX; iXAxis += iResolution)
-            {
-                double dAngle = (double)iXAxis * dAngleStep;
-                dAngle += (double)iStartDegree;
-                double dRadians = Math.PI * dAngle / 180.0;
-
-                double dSine = Math.Sin (dRadians) * (bInvertPhase ? -1 : 1);
-                dSine *= (double)iAmplitude;
-                int iYAxis = (int)(dSine);
-                iYAxis += iZeroLineY;
-
-                //Console.WriteLine ("X: {0, 6:D} Y: {1, 6:D}", iXAxis, iYAxis);
-                lptSinePoints.Add (new Point (iXAxis, iYAxis));
-            }
-
-            return lptSinePoints.ToArray ();
-        }
-
-        public static Point[] PlotLissajousCurve (int iWaveLengthX, int iWaveLengthY, int iAmplitudeX, int iAmplitudeY, bool bSwapXandY = false,
-                                                  int iPhaseX = 0, int iPhaseY = 0, bool bInvertX = false, bool bInvertY = false)
-        {
-            if (iWaveLengthX > 100 ||
-                iWaveLengthY > 100)
-            {
-                throw new Exception ("Wavelength values must not exceed 100");
-            }
-
-            int iResolution = 10;
-            int iPlotPoints = (iWaveLengthX) * (iWaveLengthY) * 100;
-            List<Point> lptLissajousPoints = new List<Point> ();
-            Point[] aptSineWaveX = PlotSineWave (iAmplitudeX / 2, iWaveLengthX * 1000, iAmplitudeX, 0, iPlotPoints * iResolution, iPhaseX, iResolution, bInvertX);
-            Point[] aptSineWaveY = PlotSineWave (iAmplitudeY / 2, iWaveLengthY * 1000, iAmplitudeY, 0, iPlotPoints * iResolution, iPhaseY, iResolution, bInvertY);
-
-            if (aptSineWaveX.Length == aptSineWaveY.Length)
-            {
-                int iLowX  = 0,
-                    iHighX = 0,
-                    iLowY  = 0,
-                    iHighY = 0,
-                    iBiasX = 0,
-                    iBiasY = 0;
-
-                for (int iIdx = 0; iIdx < aptSineWaveX.Length; ++iIdx)
-                {
-                    if (iLowX  > aptSineWaveX[iIdx].Y)
-                        iLowX  = aptSineWaveX[iIdx].Y;
-                    if (iHighX < aptSineWaveX[iIdx].Y)
-                        iHighX = aptSineWaveX[iIdx].Y;
-                        
-                    if (iLowY  > aptSineWaveY[iIdx].Y)
-                        iLowY  = aptSineWaveY[iIdx].Y;
-                    if (iHighY < aptSineWaveY[iIdx].Y)
-                        iHighY = aptSineWaveY[iIdx].Y;
-                }
-
-                if (iLowX < 0)
-                {
-                    iBiasX = -iLowX;
-                    //iLowX  = 0;
-                    //iHighX += -iLowX;
-                }
-
-                if (iLowY < 0)
-                {
-                    iBiasY = -iLowY;
-                    //iLowY  = 0;
-                    //iHighY += -iLowY;
-                }
-
-                for (int iIdx = 0; iIdx < aptSineWaveX.Length; ++iIdx)
-                {
-                    if (bSwapXandY)
-                    {
-                        lptLissajousPoints.Add (new Point (aptSineWaveY[iIdx].Y + iBiasX, aptSineWaveX[iIdx].Y + iBiasY));
-                    }
-                    else
-                    {
-                        lptLissajousPoints.Add (new Point (aptSineWaveX[iIdx].Y + iBiasX, aptSineWaveY[iIdx].Y + iBiasY));
-                    }
-                }
-            }
-
-            return lptLissajousPoints.ToArray ();
-        }
-    }
-
-    public static class CPlotterMath
-    {
-        // Center = start point = x1, y2
-        // End point = x2, y2
-        //
-        //   0    x1 < x2   y1 == y2
-        //  90    x1 == x2  y1 < y2
-        // 180    x1 > x2   y1 == y2
-        // 270    x1 == x2  y1 > y2
-        //
-        // Q I    x1 > x2   y1 > y2
-        // Q II   x1 < x2   y1 > y2
-        // Q III  x1 < x2   y1 < y2
-        // Q IV   x1 > x2   y1 < y2
-        //
-        //                90
-        //                |
-        //        Q II    |    Q I
-        //                |
-        //                |
-        //  180 ----------+---------- 0    
-        //                |
-        //                |
-        //        Q III   |    Q IV
-        //                |
-        //               270
-        //
-
-        public static Point PolarToCartesian (Point ptCenter, int iAngle, int iRadius)
-        {
-            Point ptEnd = new Point (ptCenter.X, ptCenter.Y);
-
-            iAngle %= 360;
-            if (iAngle < 0)
-            {
-                iAngle += 360;
-            }
-
-            double dRadians = Math.PI * (double)iAngle / 180.0;
-
-            ptEnd.X = (int)(Math.Cos (dRadians) * (double)iRadius) + ptCenter.X;
-            ptEnd.Y = (int)(Math.Sin (dRadians) * (double)iRadius) + ptCenter.Y;
-
-            //if (iAngle > 90 && iAngle < 270)
-            //{
-            //    ptEnd.X *= -1;
-            //}
-
-            //if (iAngle > 180)
-            //{
-            //    ptEnd.Y *= -1;
-            //}
-
-            return ptEnd;
-        }
-
-        public static void CartesianToPolar (Point ptStart, Point ptEnd, ref int riAngle, ref int riRadius)
-        {
-            double dX = ptEnd.X - ptStart.X;
-            double dY = ptEnd.Y - ptStart.Y;
-
-            double dSquareX = Math.Pow (dX, 2.0);
-            double dSquareY = Math.Pow (dY, 2.0);
-            double dHypotenuse = Math.Sqrt (dSquareX + dSquareY);
-            double dHypotenuseRound = Math.Round (dHypotenuse);
-            double dError = dHypotenuse - dHypotenuseRound;
-            bool bRoundUp = (dError > 0.0);
-
-            riRadius = (int)dHypotenuse;
-            if (bRoundUp)
-            {
-                ++riRadius;
-            }
-
-            double dRadians = Math.Atan2 (dY, dX);
-            double dAngle   = dRadians * (180 / Math.PI);
-            riAngle  = (int)Math.Round (dAngle);
-
-            if (dX < 0 && dY < 0) // X < 0 && Y < 0
-            {
-                // Quadrant II & III
-                riAngle += 360;
-            }
-            else if (dX >= 0 && dY < 0)
-            {
-                // Quadrant IV
-                riAngle += 360;
-            }
-        }
-
-        public static Point RotatePoint (Point ptCenter, int iRotationAngle, Point ptRotatePoint)
-        {
-
-            int iAngle  = 0;
-            int iRadius = 0;
-            CPlotterMath.CartesianToPolar (ptCenter, ptRotatePoint, ref iAngle, ref iRadius);
-
-            // Add rotation angle
-            int iRotateAngle = iAngle + iRotationAngle;
-
-            // Get new rotated point
-            Point ptRotatedPoint = PolarToCartesian (ptCenter, iRotateAngle, iRadius);
-            //Console.WriteLine (string.Format ("X: {0,5:D} Y: {1,5:D} -> X: {2,5:D} Y: {3,5:D}  Angle: {4,5:D} Radius: {5,5:D}",
-            //                   ptRotatePoint.X, ptRotatePoint.Y, ptRotatedPoint.X, ptRotatedPoint.Y, iAngle, iRadius));
-            
-            return ptRotatedPoint;
-        }
-
-        public static Point[] RotatePoints (Point ptCenter, int iRotationAngle, Point[] aptRotatePoints)
-        {
-            List<Point> lptRotatedPoints = new List<Point> ();
-
-            foreach (Point pt in aptRotatePoints)
-            {
-                lptRotatedPoints.Add (RotatePoint (ptCenter, iRotationAngle, pt));
-            }
-
-            return lptRotatedPoints.ToArray ();
-        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using System.Threading;
 
@@ -13,26 +14,66 @@ namespace PlotterTester
 {
     public class CPlotterTester
     {
-        public const int CIRCLE_TEST = 1;  // Test CPlotterBuffer sorting and printing
-        public const int STRESS_TEST = 2;  // Test CPlotterBuffer w/more data than fits in plotter 1024-byte buffer
-        public const int ESC_TEST = 3;  // Test HPGL ESC commands
-        public const int HPGL_TEST_1 = 4;  // Test annotated HPGL Query instructions
-        public const int HPGL_TEST_2 = 5;  // Test raw HPGL Query instructions
-        public const int HPGL_TEST_3 = 6;  // Test Boundaries and Units instructions
-        public const int HPGL_TEST_4 = 7;  // Test Pen and Plotting instructions 1
-        public const int HPGL_TEST_5 = 8;  // Test Pen and Plotting instructions 2
-        public const int HPGL_TEST_6 = 9;  // Test Pen and Plotting instructions 3
-        public const int HPGL_TEST_7 = 10; // Test Plot Enhancing instructions
-        public const int HPGL_TEST_8 = 11; // Test Labeling instructions 1
-        public const int HPGL_TEST_9 = 12; // Test Labeling instructions 2
-        public const int HPGL_TEST_10 = 13; // Test Digitizing instructions
-        public const int TEST_PROGRAMS_1 = 14; // Test programs in BASIC
-        public const int TEST_PROGRAMS_2 = 15; // Test programs in HPGL 1
-        public const int TEST_PROGRAMS_3 = 16; // Test programs in HPGL 2
+        public const int CIRCLE_TEST       = 1;  // Test CPlotterBuffer sorting and printing
+        public const int STRESS_TEST       = 2;  // Test CPlotterBuffer w/more data than fits in plotter 1024-byte buffer
+        public const int ESC_TEST          = 3;  // Test HPGL ESC commands
+        public const int HPGL_TEST_1       = 4;  // Test annotated HPGL Query instructions
+        public const int HPGL_TEST_2       = 5;  // Test raw HPGL Query instructions
+        public const int HPGL_TEST_3       = 6;  // Test Boundaries and Units instructions
+        public const int HPGL_TEST_4       = 7;  // Test Pen and Plotting instructions 1
+        public const int HPGL_TEST_5       = 8;  // Test Pen and Plotting instructions 2
+        public const int HPGL_TEST_6       = 9;  // Test Pen and Plotting instructions 3
+        public const int HPGL_TEST_7       = 10; // Test Plot Enhancing instructions
+        public const int HPGL_TEST_8       = 11; // Test Labeling instructions 1
+        public const int HPGL_TEST_9       = 12; // Test Labeling instructions 2
+        public const int HPGL_TEST_10      = 13; // Test Digitizing instructions
+        public const int TEST_PROGRAMS_1   = 14; // Test programs in BASIC
+        public const int TEST_PROGRAMS_2   = 15; // Test programs in HPGL 1
+        public const int TEST_PROGRAMS_3   = 16; // Test programs in HPGL 2
+        public const int DRAW_LINE_ART_1   = 17; // Exercise PlotSteppedLines Parallel Horizontal Guide Lines, Parallal Connecting lines
+        public const int DRAW_LINE_ART_2   = 18; // Exercise PlotSteppedLines Parallel Horizontal Guide Lines, Crossing Connecting lines
+        public const int DRAW_LINE_ART_3   = 19; // Exercise PlotSteppedLines Parallel Vertical Guide Lines, Parallal Connecting lines
+        public const int DRAW_LINE_ART_4   = 20; // Exercise PlotSteppedLines Parallel Vertical Guide Lines, Crossing Connecting lines
+        public const int DRAW_LINE_ART_5   = 21; // Guide Lines Right Angle, Parallel Connecting Lines
+        public const int DRAW_LINE_ART_6   = 22; // Guide Lines Right Angle, Crossing Connecting Lines
+        public const int DRAW_LINE_ART_7   = 23; // Exercise PlotSteppedLines Crossed Guide Lines, Parallal Connecting lines
+        public const int DRAW_LINE_ART_8   = 24; // Exercise PlotSteppedLines Crossed Guide Lines, Crossing Connecting lines
+        public const int DRAW_LINE_ART_9   = 25; // Exercise PlotSteppedLines T-Intersecting, Parallal Connecting Lines
+        public const int DRAW_LINE_ART_10  = 26; // Exercise PlotSteppedLines T-Intersecting, Parallal Connecting Lines
+        public const int DRAW_LINE_ART_11  = 27; // Exercise PlotSteppedLines, Crossing Connecting Lines non-right angles, sloping lines
+        public const int ROTATE_SQUARE     = 28; // Exercise PlotPoints, RotatePoints, and RotatePoint
+        public const int DRAW_SINE_WAVE    = 29; // Exercise PlotSineWave and PlotPoints
+        public const int DRAW_LISSAJOUS    = 30; // Exercise PlotLissajousCurve
+ 
+        //public const int SELECT_NO_PEN     = 0;
+        //public const int SELECT_PEN_1      = 1;
+        //public const int SELECT_PEN_2      = 2;
+        //public const int SELECT_PEN_3      = 3;
+        //public const int SELECT_PEN_4      = 4;
+        //public const int SELECT_PEN_5      = 5;
+        //public const int SELECT_PEN_6      = 6;
+        //public const int SELECT_PEN_7      = 7;
+        //public const int SELECT_PEN_8      = 8;
+        //public const int SELECT_ALL_PENS   = 9;
+        //public const int SELECT_PEN_RANDOM = 10;
+
         const int DEFAULT_VALUE = -1;
         const char LF = '\x0A';
         const char CR = '\x0D';
         const char ETX = '\x03';
+
+        public const bool SERIAL      = true;
+        public const bool PARALLEL    = false;
+
+
+        private bool m_bSerial = SERIAL;
+
+        public CPlotterTester () {}
+
+        public CPlotterTester (bool bSerial)
+        {
+            m_bSerial = bSerial;
+        }
 
         public void TestPlotter (bool bSerial, int iTestMode)
         {
@@ -1525,10 +1566,13 @@ namespace PlotterTester
                     wb.WriteTextString (sbldHPGL.ToString ());
                     sbldHPGL.Clear ();
 
-                    //wb.WriteTextString (CHPGL.EscAbortDeviceControl ());
-                    Console.WriteLine (wb.QueryPlotter (CHPGL.EscOutputBufferSpace ()));
-                    wb.WriteTextString (CHPGL.EscAbortGraphicControl ());
-                    Console.WriteLine (wb.QueryPlotter (CHPGL.EscOutputBufferSpace ()));
+                    if (bSerial)
+                    {
+                        //wb.WriteTextString (CHPGL.EscAbortDeviceControl ());
+                        Console.WriteLine (wb.QueryPlotter (CHPGL.EscOutputBufferSpace ()));
+                        wb.WriteTextString (CHPGL.EscAbortGraphicControl ());
+                        Console.WriteLine (wb.QueryPlotter (CHPGL.EscOutputBufferSpace ()));
+                    }
 
 
                     // HP 7475A manual 3-13
@@ -2451,6 +2495,951 @@ namespace PlotterTester
                     //wb.WriteTextString ("SP;PA0,0;");
                 }
                 #endregion
+                else if (DRAW_LINE_ART_1 == iTestMode)
+                #region Exercise PlotSteppedLines Horizontal Parallel Guide Lines, Parallal Connecting lines
+                {
+                    // Draw lines
+                    //    v 0, 5000         v 5000, 5000
+                    //    0  1  2  3  4  5  6
+                    //    +------------------
+                    //    |        |        |
+                    //    |        |        |
+                    //    |        |        |
+                    //    6  5  4  3  2  1  0
+                    //    +------------------
+                    //    ^ 0, 0            ^ 5000, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest =  (CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                   5000,    // int iLine1StartY,
+
+                                                                   5000,    // int iLine1EndX,
+                                                                   5000,    // int iLine1EndY,
+
+                                                                   0,       // int iLine2StartX,
+                                                                   0,       // int iLine2StartY,
+
+                                                                   5000,    // int iLine2EndX,
+                                                                   0,       // int iLine2EndY,
+
+                                                                   5,       // int iStepCount,
+                                                                   true));  // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest =  (CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                            5000, // int iLine1StartY,
+
+                                                            5000, // int iLine1EndX,
+                                                            5000, // int iLine1EndY,
+
+                                                            0,    // int iLine2StartX,
+                                                            0,    // int iLine2StartY,
+
+                                                            5000, // int iLine2EndX,
+                                                            0,    // int iLine2EndY,
+
+                                                            5));  // int iStepCount,
+                                                                  // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_2 == iTestMode)
+                #region Exercise PlotSteppedLines Horizontal Parallel Guide Lines, Crossing Connecting lines
+                {
+                    // Draw lines
+                    //    v 0, 5000         v 5000, 5000
+                    //    0  1  2  3  4  5  6
+                    //    +------------------
+                    //    *                *
+                    //      \            /
+                    //        \         /
+                    //          \     /
+                    //            \ /
+                    //            / \
+                    //          /     \
+                    //        /         \
+                    //      /             \
+                    //    *                 *
+                    //    6  5  4  3  2  1  0
+                    //    +------------------
+                    //    ^ 0, 0            ^ 5000, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                 5000,    // int iLine1StartY,
+
+                                                                 5000,    // int iLine1EndX,
+                                                                 5000,    // int iLine1EndY,
+
+                                                                 5000,    // int iLine2StartX,
+                                                                 0,       // int iLine2StartY,
+
+                                                                 0,       // int iLine2EndX,
+                                                                 0,       // int iLine2EndY,
+
+                                                                 5,       // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                          5000, // int iLine1StartY,
+
+                                                          5000, // int iLine1EndX,
+                                                          5000, // int iLine1EndY,
+
+                                                          5000, // int iLine2StartX,
+                                                          0,    // int iLine2StartY,
+
+                                                          0,    // int iLine2EndX,
+                                                          0,    // int iLine2EndY,
+
+                                                          5);   // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_3 == iTestMode)
+                #region Exercise PlotSteppedLines Vertical Parallel Guide Lines, Parallal Connecting lines
+                {
+                    // Draw lines
+                    //    v 0, 5000 
+                    // 0 + ------ + - 5000, 5000   Line 1: 0, 0    -> 0, 5000
+                    // 1 |        |                Line 2: 5000, 0 -> 5000, 5000
+                    // 2 |        |
+                    // 3 | ------ |
+                    // 4 |        |
+                    // 5 |        |
+                    // 6 + ------ + - 5000, 0
+                    //    ^ 0, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.EscReset () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest =  (CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                   0,       // int iLine1StartY,
+
+                                                                   0,       // int iLine1EndX,
+                                                                   5000,    // int iLine1EndY,
+
+                                                                   5000,    // int iLine2StartX,
+                                                                   0,       // int iLine2StartY,
+
+                                                                   5000,    // int iLine2EndX,
+                                                                   5000,    // int iLine2EndY,
+
+                                                                   5,       // int iStepCount,
+                                                                   true));  // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest =  (CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                            0,    // int iLine1StartY,
+
+                                                            0,    // int iLine1EndX,
+                                                            5000, // int iLine1EndY,
+
+                                                            5000, // int iLine2StartX,
+                                                            0,    // int iLine2StartY,
+
+                                                            5000, // int iLine2EndX,
+                                                            5000, // int iLine2EndY,
+
+                                                            5));  // int iStepCount,
+                                                                  // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_4 == iTestMode)
+                #region Exercise PlotSteppedLines Parallel Guide Lines, Crossing Connecting lines
+                {
+                    // Draw lines
+                    //    v 0, 5000 
+                    // 0 + *    * + - 5000, 5000
+                    // 1 |  \  /  |
+                    // 2 |   \/   |
+                    // 3 |   /\   |
+                    // 4 |  /  \  |
+                    // 5 + *    * + - 5000, 0
+                    //    ^ 0, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                 0,       // int iLine1StartY,
+
+                                                                 0,       // int iLine1EndX,
+                                                                 5000,    // int iLine1EndY,
+
+                                                                 5000,    // int iLine2StartX,
+                                                                 5000,    // int iLine2StartY,
+
+                                                                 5000,    // int iLine2EndX,
+                                                                 0,       // int iLine2EndY,
+
+                                                                 5,       // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                          0,    // int iLine1StartY,
+
+                                                          0,    // int iLine1EndX,
+                                                          5000, // int iLine1EndY,
+
+                                                          5000, // int iLine2StartX,
+                                                          5000, // int iLine2StartY,
+
+                                                          5000, // int iLine2EndX,
+                                                          0,    // int iLine2EndY,
+
+                                                          5);   // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_5 == iTestMode)
+                #region Exercise PlotSteppedLines Guide Lines Right Angle, Parallel Connecting Lines
+                {
+                    //    v 0, 5000         v 5000, 5000
+                    // Draw lines
+                    //    0  1  2  3  4  5  6       Line 1: 0, 5000 -> 5000, 5000
+                    //    +------------------       Line 2: 0, 5000 -> 0,    0
+                    //  0 |     *     *     *
+                    //  1 |   /      /     /
+                    //  2 |  *    /     /
+                    //  3 |    /     /
+                    //  4 |  *    /
+                    //  5 |    /
+                    //  6 |  *
+                    //    ^ 0, 0            ^ 5000, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                 5000,    // int iLine1StartY,
+
+                                                                 5000,    // int iLine1EndX,
+                                                                 5000,    // int iLine1EndY,
+
+                                                                 0,       // int iLine2StartX,
+                                                                 5000,    // int iLine2StartY,
+
+                                                                 0,       // int iLine2EndX,
+                                                                 0,       // int iLine2EndY,
+
+                                                                 5,       // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                          5000, // int iLine1StartY,
+
+                                                          5000, // int iLine1EndX,
+                                                          5000, // int iLine1EndY,
+
+                                                          0,    // int iLine2StartX,
+                                                          5000, // int iLine2StartY,
+
+                                                          0,    // int iLine2EndX,
+                                                          0,    // int iLine2EndY,
+
+                                                          5);   // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_6 == iTestMode)
+                #region Exercise PlotSteppedLines Guide Lines Right Angle, Crossing Connecting Lines
+                {
+                    //    v 0, 5000         v 5000, 5000
+                    // Draw lines
+                    //    0  1  2  3  4  5  6       Line 1: 0, 5000 -> 5000, 5000
+                    //    +------------------       Line 2: 0, 0    -> 0,    5000
+                    //  0 | 
+                    //  1 | 
+                    //  2 | 
+                    //  3 | 
+                    //  4 | 
+                    //  5 | 
+                    //  6 | 
+                    //    ^ 0, 0            ^ 5000, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw without guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                                 5000, // int iLine1StartY,
+
+                                                                 5000, // int iLine1EndX,
+                                                                 5000, // int iLine1EndY,
+
+                                                                 0,    // int iLine2StartX,
+                                                                 0,    // int iLine2StartY,
+
+                                                                 0,    // int iLine2EndX,
+                                                                 5000, // int iLine2EndY,
+
+                                                                 15);  // int iStepCount,
+                                                                       // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw with guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                          5000,    // int iLine1StartY,
+
+                                                          5000,    // int iLine1EndX,
+                                                          5000,    // int iLine1EndY,
+
+                                                          0,       // int iLine2StartX,
+                                                          0,       // int iLine2StartY,
+
+                                                          0,       // int iLine2EndX,
+                                                          5000,    // int iLine2EndY,
+
+                                                          15,      // int iStepCount,
+                                                          true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_7 == iTestMode)
+                #region Exercise PlotSteppedLines Crossed Guide Lines, Parallal Connecting lines
+                {
+                    // Draw lines
+                    //            v 2500, 5000              Line 1: 2500, 5000 -> 2500, 0
+                    //           *| . . . . . . . .  0      Line 2: 0,    2500 -> 5000, 2500
+                    //        /   | . . . . . . . .  1
+                    //    0  1  2 |3  4  5  6        2
+                    //    +------------------        3
+                    //    ^       |        *         4
+                    //  0, 2500   |    / 5000, 2500  5
+                    //            |*                 6
+                    //            ^ 2500, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (2500,    // int iLine1StartX,
+                                                                 5000,    // int iLine1StartY,
+
+                                                                 2500,    // int iLine1EndX,
+                                                                 0,       // int iLine1EndY,
+
+                                                                 0,       // int iLine2StartX,
+                                                                 2500,    // int iLine2StartY,
+
+                                                                 5000,    // int iLine2EndX,
+                                                                 2500,    // int iLine2EndY,
+
+                                                                 15,      // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (2500, // int iLine1StartX,
+                                                          5000, // int iLine1StartY,
+
+                                                          2500, // int iLine1EndX,
+                                                          0,    // int iLine1EndY,
+
+                                                          0,    // int iLine2StartX,
+                                                          2500, // int iLine2StartY,
+
+                                                          5000, // int iLine2EndX,
+                                                          2500, // int iLine2EndY,
+
+                                                          15);  // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_8 == iTestMode)
+                #region Exercise PlotSteppedLines Crossed Guide Lines, Crossing Connecting lines
+                {
+                    // Draw lines
+                    //            v 2500, 5000              Line 1: 2500, 5000 -> 2500, 0
+                    //           *| . . . . . . . .  0      Line 2: 5000, 2500 -> 0,    2500
+                    //        /   | . . . . . . . .  1
+                    //    0  1  2 |3  4  5  6        2
+                    //    +------------------        3
+                    //    ^       |        *         4
+                    //  0, 2500   |    / 5000, 2500  5
+                    //            |*                 6
+                    //            ^ 2500, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (2500,    // int iLine1StartX,
+                                                                 5000,    // int iLine1StartY,
+
+                                                                 2500,    // int iLine1EndX,
+                                                                 0,       // int iLine1EndY,
+
+                                                                 5000,    // int iLine2StartX,
+                                                                 2500,    // int iLine2StartY,
+
+                                                                 0,       // int iLine2EndX,
+                                                                 2500,    // int iLine2EndY,
+
+                                                                 15,      // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (2500, // int iLine1StartX,
+                                                          5000, // int iLine1StartY,
+
+                                                          2500, // int iLine1EndX,
+                                                          0,    // int iLine1EndY,
+
+                                                          5000, // int iLine2StartX,
+                                                          2500, // int iLine2StartY,
+
+                                                          0,    // int iLine2EndX,
+                                                          2500, // int iLine2EndY,
+
+                                                          15);  // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_9 == iTestMode)
+                #region Exercise PlotSteppedLines T-Intersecting Guide Lines, Crossing Connecting Lines
+                {
+                    // Draw lines
+                    //    v 0, 5000         v 5000, 5000
+                    //    0  1  2  3  4  5  6
+                    //    +-------------------*           Line 1: 0,    5000 -> 5000, 5000
+                    //                        | 0         Line 2: 5000, 5000 -> 5000, 0
+                    //                        | 1
+                    //                        | 2
+                    //                        | 3
+                    //                        | 4
+                    //                        | 5
+                    //                        | 6
+                    //    ^ 0, 0            ^ 5000, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                 5000,    // int iLine1StartY,
+
+                                                                 5000,    // int iLine1EndX,
+                                                                 5000,    // int iLine1EndY,
+
+                                                                 5000,    // int iLine2StartX,
+                                                                 5000,    // int iLine2StartY,
+
+                                                                 5000,    // int iLine2EndX,
+                                                                 0,       // int iLine2EndY,
+
+                                                                 15,      // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                          5000, // int iLine1StartY,
+
+                                                          5000, // int iLine1EndX,
+                                                          5000, // int iLine1EndY,
+
+                                                          5000, // int iLine2StartX,
+                                                          5000, // int iLine2StartY,
+
+                                                          5000, // int iLine2EndX,
+                                                          0,    // int iLine2EndY,
+
+                                                          15);  // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_10 == iTestMode)
+                #region Exercise PlotSteppedLines T-Intersecting Guide Lines, Parallel Connecting Lines
+                {
+                    // Draw lines
+                    //    v 0, 5000         v 5000, 5000
+                    //    0  1  2  3  4  5  6
+                    //    +-------------------*           Line 1: 0,    5000 -> 5000, 5000
+                    //                        | 0         Line 2: 5000, 0    -> 5000, 5000
+                    //                        | 1
+                    //                        | 2
+                    //                        | 3
+                    //                        | 4
+                    //                        | 5
+                    //                        | 6
+                    //    ^ 0, 0            ^ 5000, 0
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // Draw with guidelines
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,       // int iLine1StartX,
+                                                                 5000,    // int iLine1StartY,
+
+                                                                 5000,    // int iLine1EndX,
+                                                                 5000,    // int iLine1EndY,
+
+                                                                 5000,    // int iLine2StartX,
+                                                                 0,       // int iLine2StartY,
+
+                                                                 5000,    // int iLine2EndX,
+                                                                 5000,    // int iLine2EndY,
+
+                                                                 15,      // int iStepCount,
+                                                                 true);   // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw with guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    // Draw without guidelines
+                    strPlotTest = CHPGL.PlotSteppedLines (0,    // int iLine1StartX,
+                                                          5000, // int iLine1StartY,
+
+                                                          5000, // int iLine1EndX,
+                                                          5000, // int iLine1EndY,
+
+                                                          5000, // int iLine2StartX,
+                                                          0,    // int iLine2StartY,
+
+                                                          5000, // int iLine2EndX,
+                                                          5000, // int iLine2EndY,
+
+                                                          15);  // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    //Console.WriteLine ("Draw without guidelines");
+                    //Console.WriteLine (strPlotTest);
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_LINE_ART_11 == iTestMode)
+                #region Exercise PlotSteppedLines, Crossing Connecting Lines non-right angles, sloping lines
+                {
+                    //        0  1k  2k  3k  4k  5k  6k 7k 
+                    //        +-----------------------------------------
+                    //  10000 |      *         *
+                    //   9000 |     / \         \       *                  Case 1:    0, 5000,  2000, 10000, 2000, 10000, 3000, 6000, 15
+                    //   8000 |    /   \         \     /                   
+                    //   7000 |   /     \         \   /                    Case 2: 4000, 10000, 6000,  5000, 6000,  5000, 7000, 9000, 15
+                    //   6000 |  /  *    *    *    \ /
+                    //   5000 | *  /           \    *                      Case 3: 2000,  6000,    0,  3000,    0,  3000, 2000,    0, 15
+                    //   4000 |   /             \
+                    //   3000 |  *               *                         Case 4: 4000,  6000, 5000,  3000, 5000,  3000, 4000,    0, 15
+                    //   2000 |   \             /
+                    //   1000 |    \           /
+                    //      0 |     *         *
+                    // 
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    // First case:    0, 5000, 2000, 10000, 2000, 10000, 3000, 6000, 15
+                    string strPlotTest = CHPGL.PlotSteppedLines (0,     // int iLine1StartX,
+                                                                 5000,  // int iLine1StartY,
+
+                                                                 2000,  // int iLine1EndX,
+                                                                 10000, // int iLine1EndY,
+
+                                                                 2000,  // int iLine2StartX,
+                                                                 10000, // int iLine2StartY,
+
+                                                                 3000,  // int iLine2EndX,
+                                                                 6000,  // int iLine2EndY,
+
+                                                                 15);   // int iStepCount,
+                                                                        // bool bDrawGuideLines = false)
+                    wb.WriteTextString (strPlotTest);
+
+                    // Second case: 4000, 10000, 6000, 5000, 6000, 5000, 7000, 9000, 15
+                    strPlotTest = CHPGL.PlotSteppedLines (4000,  // int iLine1StartX,
+                                                          10000, // int iLine1StartY,
+
+                                                          6000,  // int iLine1EndX,
+                                                          5000,  // int iLine1EndY,
+
+                                                          6000,  // int iLine2StartX,
+                                                          5000,  // int iLine2StartY,
+
+                                                          7000,  // int iLine2EndX,
+                                                          9000,  // int iLine2EndY,
+
+                                                          15);   // int iStepCount,
+                                                                 // bool bDrawGuideLines = false)
+                    wb.WriteTextString (strPlotTest);
+
+                    // Third case: 2000, 6000, 0, 3000, 0, 3000, 2000,    0, 15
+                    strPlotTest = CHPGL.PlotSteppedLines (2000, // int iLine1StartX,
+                                                          6000, // int iLine1StartY,
+
+                                                          0,    // int iLine1EndX,
+                                                          3000, // int iLine1EndY,
+
+                                                          0,    // int iLine2StartX,
+                                                          3000, // int iLine2StartY,
+
+                                                          2000, // int iLine2EndX,
+                                                          0,    // int iLine2EndY,
+
+                                                          15);  // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    wb.WriteTextString (strPlotTest);
+
+                    // Fourth case: 4000, 6000, 5000, 3000, 5000, 3000, 4000,    0, 15
+                    strPlotTest = CHPGL.PlotSteppedLines (4000, // int iLine1StartX,
+                                                          6000, // int iLine1StartY,
+
+                                                          5000, // int iLine1EndX,
+                                                          3000, // int iLine1EndY,
+
+                                                          5000, // int iLine2StartX,
+                                                          3000, // int iLine2StartY,
+
+                                                          4000, // int iLine2EndX,
+                                                          0,    // int iLine2EndY,
+
+                                                          15);  // int iStepCount,
+                                                                // bool bDrawGuideLines = false)
+                    wb.WriteTextString (strPlotTest);
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (ROTATE_SQUARE == iTestMode)
+                #region Exercise PlotPoints, RotatePoints, and RotatePoint
+                {
+                    //
+                    //        |
+                    //   3000 |      +----------+
+                    //        |      |          |
+                    //        |      |          |
+                    //        |      |          |
+                    //        |      |          |
+                    //   1000 |      +----------+
+                    //        |    1000        3000
+                    //        |
+                    //        +---------------------
+
+                    WrapperBase wb = null;
+
+                    if (bSerial)
+                    {
+                        wb = new SerialWrapper ();
+                    }
+                    else
+                    {
+                        wb = new ParallelWrapper ();
+                    }
+
+                    wb.WriteTextString (CHPGL.Initialize () + CHPGL.SelectPen (1));
+
+                    List<Point> lptSquare = new List<Point> ();
+                    lptSquare.Add (new Point (1000, 1000));
+                    lptSquare.Add (new Point (1000, 3000));
+                    lptSquare.Add (new Point (3000, 3000));
+                    lptSquare.Add (new Point (3000, 1000));
+                    lptSquare.Add (new Point (1000, 1000));
+                    //CHPGL.PlotPoints (lptSquare.ToArray (), EPenSelect.ESelectPen1, false, false);
+
+                    for (int iAngle = 0; iAngle < 90; iAngle += 10)
+                    {
+                        Point[] aptRotatedSquare = CPlotterMath.RotatePoints (new Point (2000, 2000), iAngle, lptSquare.ToArray ());
+                        CHPGL.PlotPoints (aptRotatedSquare, wb, EPenSelect.ESelectPen1);
+                    }
+
+                    wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+                    if (wb.IsSerial ())
+                    {
+                        wb.CloseOutputPort ();
+                    }
+                }
+                #endregion
+                else if (DRAW_SINE_WAVE == iTestMode)
+                #region Exercise PlotPoints, RotatePoints, and RotatePoint
+                {
+                    CHPGL.PlotPoints (CPlotterShapes.PlotSineWave (5000,   // int iZeroLineY
+                                                                   2000,   // int iWaveLength
+                                                                   3000,   // int iAmplitude
+                                                                   0,      // int iStartX
+                                                                   6000,   // int iEndX
+                                                                   90,     // int iStartDegree = 0
+                                                                   20,     // int iResolution = 10
+                                                                   false), // bool bInvertPhase = false
+                                      EPenSelect.ESelectPen1, false);
+                }
+                #endregion
+                else if (DRAW_LISSAJOUS == iTestMode)
+                #region Exercise PlotLissajousCurve
+                {
+                    CHPGL.PlotPoints (CPlotterShapes.PlotLissajousCurve (3,     // int iWaveLengthX
+                                                                         2,     // int iWaveLengthY
+                                                                         3000,  // int iAmplitudeX
+                                                                         3000), // int iAmplitudeY
+                                      EPenSelect.ESelectPen1, false);
+                    CHPGL.PlotPoints (CPlotterShapes.PlotLissajousCurve (3,     // int iWaveLengthX
+                                                                         5,     // int iWaveLengthY
+                                                                         3000,  // int iAmplitudeX
+                                                                         3000), // int iAmplitudeY
+                                      EPenSelect.ESelectPen2, false);
+                    CHPGL.PlotPoints (CPlotterShapes.PlotLissajousCurve (3,     // int iWaveLengthX
+                                                                         4,     // int iWaveLengthY
+                                                                         3000,  // int iAmplitudeX
+                                                                         3000), // int iAmplitudeY
+                                      EPenSelect.ESelectPen3, false);
+                }
+                #endregion
                 else
                 #region Test CPlotterBuffer
                 {
@@ -2666,5 +3655,255 @@ namespace PlotterTester
             strPortName = sw.WriteTextString (CHPGL.SelectPen (0) + CHPGL.PlotAbsolute (0, 0));
             bool b = sw.CloseOutputPort ();
         }
+
+        static void DrawRadialLinesInThickFrame (int iBottom, int iTop, int iLeft, int iRight, int iLinesPerInch, int iFrameThickness, bool bSerial)
+        {
+        }
+
+        //static int SelectPen (List<int> liOrderedPens, List<int> liRandomPens, int iSelectedPen, int iPenIdx)
+        //{
+        //    //if (iSelectedPen == SELECT_ALL_PENS)
+        //    //{
+        //    //    return liOrderedPens[iPenIdx];
+        //    //}
+        //    //else if (iSelectedPen == SELECT_PEN_RANDOM)
+        //    //{
+        //    //    return liRandomPens[iPenIdx];
+        //    //}
+        //    //else
+        //    //{
+        //    //    return iSelectedPen;
+        //    //}
+
+        //    return (iSelectedPen == SELECT_ALL_PENS)   ? liOrderedPens[iPenIdx] :
+        //           (iSelectedPen == SELECT_PEN_RANDOM) ? liRandomPens[iPenIdx]  : iSelectedPen;
+        //}
+
+        //public void DrawFourQuadrants (int iBottomLeftX, int iBottomLeftY, int iTopRightX, int iTopRightY, int iStepCount,
+        //                               int iOuterCirclePen, bool bDrawOuterCircleGuideLines,
+        //                               int iInnerSpikePen,  bool bDrawInnerSpikeGuideLines,
+        //                               int iOuterSpkePen,   bool bDrawOuterSpikeGuideLines, bool bSerial)
+        //{
+        //    // If either iTopRightX or iTopRightY are negative, their absolute values
+        //    // are used to determine height and width instead of plot coordinates
+        //    if (iTopRightX < 0)
+        //    {
+        //        iTopRightX  = iTopRightX * -1;
+        //        iTopRightX += iBottomLeftX;
+        //    }
+
+        //    if (iTopRightY < 0)
+        //    {
+        //        iTopRightY  = iTopRightY * -1;
+        //        iTopRightY += iBottomLeftY;
+        //    }
+
+        //    if (iBottomLeftX < iTopRightX         &&
+        //        iBottomLeftY < iTopRightY         &&
+        //        (iOuterCirclePen != SELECT_NO_PEN ||
+        //         iInnerSpikePen  != SELECT_NO_PEN ||
+        //         iOuterSpkePen   != SELECT_NO_PEN))
+        //    {
+        //        int iTop          = iTopRightY;
+        //        int iBottom       = iBottomLeftY;
+        //        int iLeft         = iBottomLeftX;
+        //        int iRight        = iTopRightX;
+        //        int iWidth        = (iTopRightX - iBottomLeftX);
+        //        int iHeight       = (iTopRightY - iBottomLeftY);
+        //        int iCenterWidth  = iBottomLeftX + (iWidth  / 2);
+        //        int iCenterHeight = iBottomLeftY + (iHeight / 2);
+
+        //        Point ptTopLeft      = new Point (iLeft,        iTop);
+        //        Point ptTopCenter    = new Point (iCenterWidth, iTop);
+        //        Point ptTopRight     = new Point (iRight,       iTop);
+        //        Point ptLeftCenter   = new Point (iLeft,        iCenterHeight);
+        //        Point ptCenterXY     = new Point (iCenterWidth, iCenterHeight);
+        //        Point ptRightCenter  = new Point (iRight,       iCenterHeight);
+        //        Point ptBottomLeft   = new Point (iLeft,        iBottom);
+        //        Point ptBottomCenter = new Point (iCenterWidth, iBottom);
+        //        Point ptBottomRight  = new Point (iRight,       iBottom);
+
+        //        List<int> liOrderedPens = new List<int> ();
+        //        List<int> liRandomPens  = new List<int> ();
+
+        //        liOrderedPens.Add (SELECT_PEN_1);
+        //        liOrderedPens.Add (SELECT_PEN_2);
+        //        liOrderedPens.Add (SELECT_PEN_3);
+        //        liOrderedPens.Add (SELECT_PEN_4);
+        //        liOrderedPens.Add (SELECT_PEN_5);
+        //        liOrderedPens.Add (SELECT_PEN_6);
+        //        liOrderedPens.Add (SELECT_PEN_7);
+        //        liOrderedPens.Add (SELECT_PEN_8);
+
+        //        if (iOuterCirclePen == SELECT_PEN_RANDOM ||
+        //             iInnerSpikePen == SELECT_PEN_RANDOM ||
+        //             iOuterSpkePen  == SELECT_PEN_RANDOM)
+        //        {
+        //            DateTime dtNow = DateTime.Now;
+        //            Random rand = new Random (dtNow.Millisecond);
+
+        //            while (liOrderedPens.Count > 1)
+        //            {
+        //                int iIdx = rand.Next (liOrderedPens.Count - 1);
+        //                liRandomPens.Add (liOrderedPens[iIdx]);
+        //                liOrderedPens.RemoveAt (iIdx);
+        //            }
+        //            liRandomPens.Add (liOrderedPens[0]);
+        //            liOrderedPens.RemoveAt (0);
+
+        //            liOrderedPens.Add (SELECT_PEN_1);
+        //            liOrderedPens.Add (SELECT_PEN_2);
+        //            liOrderedPens.Add (SELECT_PEN_3);
+        //            liOrderedPens.Add (SELECT_PEN_4);
+        //            liOrderedPens.Add (SELECT_PEN_5);
+        //            liOrderedPens.Add (SELECT_PEN_6);
+        //            liOrderedPens.Add (SELECT_PEN_7);
+        //            liOrderedPens.Add (SELECT_PEN_8);
+        //        }
+
+        //        WrapperBase wb = null;
+
+        //        if (bSerial)
+        //        {
+        //            wb = new SerialWrapper ();
+        //        }
+        //        else
+        //        {
+        //            wb = new ParallelWrapper ();
+        //        }
+
+        //        wb.WriteTextString (CHPGL.Initialize ());
+
+        //        string strPlotSteppedLines = "";
+
+        //        if (iOuterCirclePen != SELECT_NO_PEN)
+        //        {
+        //            // Draw ourter cirle 1
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterCirclePen == SELECT_ALL_PENS)   ? liOrderedPens[0] :
+        //                                                 (iOuterCirclePen == SELECT_PEN_RANDOM) ? liRandomPens[0]  : iOuterCirclePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopCenter, ptTopLeft, ptTopLeft,   ptLeftCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw ourter cirle 2
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterCirclePen == SELECT_ALL_PENS)   ? liOrderedPens[1] :
+        //                                                 (iOuterCirclePen == SELECT_PEN_RANDOM) ? liRandomPens[1]  : iOuterCirclePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopCenter, ptTopRight, ptTopRight,  ptRightCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw ourter cirle 3
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterCirclePen == SELECT_ALL_PENS)   ? liOrderedPens[2] :
+        //                                                 (iOuterCirclePen == SELECT_PEN_RANDOM) ? liRandomPens[2]  : iOuterCirclePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptRightCenter, ptBottomRight, ptBottomRight, ptBottomCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw ourter cirle 4
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterCirclePen == SELECT_ALL_PENS)   ? liOrderedPens[3] :
+        //                                                 (iOuterCirclePen == SELECT_PEN_RANDOM) ? liRandomPens[3]  : iOuterCirclePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomCenter, ptBottomLeft, ptBottomLeft, ptLeftCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+        //        }
+
+        //        if (iInnerSpikePen != SELECT_NO_PEN)
+        //        {
+        //            // Draw inner spike 1
+        //            wb.WriteTextString (CHPGL.SelectPen ((iInnerSpikePen == SELECT_ALL_PENS)   ? liOrderedPens[0] :
+        //                                                 (iInnerSpikePen == SELECT_PEN_RANDOM) ? liRandomPens[0]  : iInnerSpikePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptLeftCenter, ptCenterXY, ptCenterXY, ptTopCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw inner spike 2
+        //            wb.WriteTextString (CHPGL.SelectPen ((iInnerSpikePen == SELECT_ALL_PENS)   ? liOrderedPens[1] :
+        //                                                 (iInnerSpikePen == SELECT_PEN_RANDOM) ? liRandomPens[1]  : iInnerSpikePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopCenter, ptCenterXY, ptCenterXY, ptRightCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw inner spike 3
+        //            wb.WriteTextString (CHPGL.SelectPen ((iInnerSpikePen == SELECT_ALL_PENS)   ? liOrderedPens[2] :
+        //                                                 (iInnerSpikePen == SELECT_PEN_RANDOM) ? liRandomPens[2]  : iInnerSpikePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptRightCenter, ptCenterXY, ptCenterXY, ptBottomCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw inner spike 4
+        //            wb.WriteTextString (CHPGL.SelectPen ((iInnerSpikePen == SELECT_ALL_PENS)   ? liOrderedPens[3] :
+        //                                                 (iInnerSpikePen == SELECT_PEN_RANDOM) ? liRandomPens[3]  : iInnerSpikePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomCenter, ptCenterXY, ptCenterXY, ptLeftCenter,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+        //        }
+
+        //        if (iOuterSpkePen != SELECT_NO_PEN)
+        //        {
+        //            // Draw outer spike 1 (top left)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[0] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[0]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopLeft, ptTopCenter, ptTopCenter, ptCenterXY,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 2 (top right)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[1] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[1]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptTopCenter, ptTopCenter, ptTopRight,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 3 (right center top)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[2] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[2]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptTopRight, ptRightCenter, ptRightCenter, ptCenterXY,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 4 (right center bottom)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[3] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[3]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptRightCenter, ptRightCenter, ptBottomRight,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 5 (bottom right)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[4] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[4]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomRight, ptBottomCenter, ptBottomCenter, ptCenterXY,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 6 (bottom left)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[5] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[5]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptBottomCenter, ptBottomCenter, ptBottomLeft,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 7 (left center bottom)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[6] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[6]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptBottomLeft, ptLeftCenter, ptLeftCenter, ptCenterXY,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+
+        //            // Draw outer spike 8 (left center top)
+        //            wb.WriteTextString (CHPGL.SelectPen ((iOuterSpkePen == SELECT_ALL_PENS)   ? liOrderedPens[7] :
+        //                                                 (iOuterSpkePen == SELECT_PEN_RANDOM) ? liRandomPens[7]  : iOuterSpkePen));
+        //            strPlotSteppedLines = CHPGL.PlotSteppedLines (ptCenterXY, ptLeftCenter, ptLeftCenter, ptTopLeft,
+        //                                                          iStepCount, bDrawOuterCircleGuideLines);
+        //            wb.WriteTextString (strPlotSteppedLines);
+        //        }
+
+        //        wb.WriteTextString (CHPGL.PlotAbsolute (0, 0) + CHPGL.SelectPen (0));
+
+        //        if (wb.IsSerial ())
+        //        {
+        //            wb.CloseOutputPort ();
+        //        }
+        //    }
+        //}
     }
 }

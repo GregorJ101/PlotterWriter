@@ -1,0 +1,1 @@
+C:\Tools\IncrementBuild.exe ..\PlotterBuffer\Properties\AssemblyInfo.cs
