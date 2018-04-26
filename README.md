@@ -8,5 +8,6 @@ The project PlotterDriver contains all the C++ code used in the solution.  It do
 
 PlotterBuffer is a class for optimizing a series of plot commands in HPGL based on pen color.  It is not yet complete, but does all the work needed to sort by pen color.  Planned enhancements include optimizing the instruction sequence to minimize pen travel between drawing tasks, and to track all HPGL-controlled status settings such as character size, plot speed, and all others that can be set by commands that don't cause the pen to be moved.
 
-Future plans include higher-level code to draw complex objects and a GUI for creating designs which are then drawn by the plotter.
+The latest version includes code to draw some complex shapes in including image rotation, sine waves, and Lissajous curves.  It also has code foe drawing images based on string art images found on the Internat.
 
+A real user interface is planned for sometime in the future.
