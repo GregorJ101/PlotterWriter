@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlotterWriterConsoleUI", "PlotterWriterConsoleUI\PlotterWriterConsoleUI.csproj", "{8422CCE7-BF8D-4A19-9D2A-50F97A459156}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlotterEngineFilesLib", "PlotterEngineFilesLib\PlotterEngineFilesLib.csproj", "{AC596B28-367D-4B4B-917C-555D1F1DB739}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Debug|Win32 = Debug|Win32
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+		Release|Win32 = Release|Win32
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Debug|Any CPU.Build.0 = Debug|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Release|Any CPU.ActiveCfg = Release|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Release|Any CPU.Build.0 = Release|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Release|Mixed Platforms.Build.0 = Release|x86
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Release|Win32.ActiveCfg = Release|Any CPU
+		{8422CCE7-BF8D-4A19-9D2A-50F97A459156}.Release|x86.ActiveCfg = Release|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Release|Win32.ActiveCfg = Release|Any CPU
+		{AC596B28-367D-4B4B-917C-555D1F1DB739}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
