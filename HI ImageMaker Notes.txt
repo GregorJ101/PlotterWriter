@@ -1,0 +1,184 @@
+HI ImageMaker Notes
+
+Communications Tests:
+- Power on w/ DOWN arrow depressed, then release key to capture
+  data input in HEX
+- Power on w/ UP arrow depressed, then release key to capture
+  data input in ASCII characters (not documented in manual)
+
+USB Serial Connection:
+  All default settings
+    Baud:     9600
+    Stop bit: 1
+    Parity:   none
+  USB/Serial cable works fine (TRENDnet USB serial requires driver to be installed from CD)
+    NOTE: pins 2 & 3 must not be switched
+          Use null modem DB9F/DB25M cable
+  Used C:\Tools\SerialSend.exe for testing
+    (from https://batchloaf.wordpress.com/serialsend/)
+    SerialSend will find the appropriate USB port
+  Echo command from DOS box works fine w/ correct USB port & 9600
+
+  DB9 to DB25 pin connections from manual (B-3) and from null-modem cable:
+    DB9               B-3       cable
+     1        -       NC         NC
+     2 (TXD)  -  2   (TXD)   2  (TXD)
+     3 (RXD)  -  3   (RXD)   3  (RXD)
+     4 (CTS)  -  5   (CTS)   6  (RTS) ?
+     5 (gnd)  -  7   (gnd)   7  (gnd)
+     6 (RTS)  -  4   (RTS)   20 (DTR) ?
+     7 (DSR)  -  6   (DSR)   5  (DSR) ?
+     8 (DTR)  -  20  (DTR)   4  (DTR) ?
+     9        -  NC               NC
+
+      DB9     DB25  home-made adapter:
+     -----    -----
+     1     -  4 & 5  gray
+     2     -  2      red
+     3     -  3      green
+     4     -  6      blue
+     5     -  7      brown
+     6     -  NC
+     7 & 8 -  8      purple
+     8     -  20     NC (orange)
+
+     From the manual (B-3)
+     2   2   (TXD)
+     3   3   (RXD)
+     4   5   (CTS)
+     5   7   (gnd)
+     6   4   (RTS)
+     7   6   (DSR)
+     8   20  (DTR)
+
+USB Parallel Connection:
+- USB/Parallel cable shows up in "Devices and Printers" as
+  "IEEE-1284 Controller" under "Unspecified" but has no USB port
+- 2016-03-20
+  Plotter works fine w/ parallel connection from MailBox
+  Plotter did work fine w/ USB-to-parallel cable on JukeBox in Feb 2015
+  Today JukeBox can't talk to plotter on parallel, but can on serial
+  USB/Parallel cable visible in Windows but isn't accessible
+- 2016-03-21
+  Plotter works fine w/ parallel connection from PhotoBox, JukeBox, ThinkPad
+  Procedure used:
+  1. Connect cable. An icon will appear in the Devices and Printers window
+     under "Unspecified" with the name "IEEE-1284 Controller".
+  2. Delete all old USB-Parallel printers created.
+  3. Create a new printer (any name will do, but use "USB Parallel Port" for
+     clarity.
+  4. Choose one of the USB ports listed and print a test page.
+  5. If the test page doesn't print, right-click on the new printer and
+     choose "Printer Properties" in the context menu.
+  6. Delete all USB ports listed (unless USB001 is in use by a known-good
+     printer device).  A messagebox will appear indicating that the port
+     can't be deleted.  Ignore it.
+  7. Select USB ports beginning with USB002 and print test page.  Repeat with
+     all available USB ports until the test page begins to print.
+  8. If a test page won't print, disconnect the USB cable and re-connect it
+     after a few seconds and try again.  For some reason it doesn't always
+     work immediately, but eventually it does.
+     NOTE: When the printer icon in the "Devices and Printers" window is grayed out,
+           the printer isn't ready.  Repeat step 8 until it is no longer grayed out.
+  This procedure was effective on all 3 Windows 7 machines.
+  It appears that this procedure must be repeated each time the cable is
+    removed and reconnected.
+- 2016-03-26
+  Discovered that sometimes the parallel port will stop working, which
+    has happened after sleep/wake, but not with all sleep/wake cycles.
+  This was also during development of the C++/C# PlotterWriter solution.
+  The symptoms are that output from PlotterWriter doesn't reach the
+    plotter, and the spooler shows "Error - Printing" in the document list.
+  The solution is to unplug the USB/Parallel cable from the USB slot, wait
+    until the device created for it dims in the "Devices and Printers"
+    dialog box, then plug it back in.  The device icon should return to its
+    non-dimmed/active state, after which it should work fine.  In the event
+    that it doesn't, removing and re-creating the printer should fix it.
+- 2016-03-27
+  NOTE: Once the plotter receives input on a port, it expects input only on
+        that port and must powered off and back on to receive input on the
+        other port.  The other port may remain connected but any data sent on
+        it will be ignored and discarded.
+  NOTE: The serial cable used in testing was the DB9/DB25 cable in the
+        computer cables drawer in the plastic drawers cabinet, along with
+        the RS-232 breakout box used to cross pin 2 from the cable to pin 3
+        to the plotter.  Pins 2 & 3 must be turned off on the breakout box.
+  NOTE: Pin 2 on the adapter must connect to pin 2 on the plotter, pin 3 to
+        pin 3, etc.  "Straight-Through" pin-outs instead of "Null-modem".
+  NOTE: Procedure to remove obsolete COM ports:
+        1. Open command prompt "Run as administrator"
+        2. set devmgr_show_nonpresent_devices=1
+        3. start devmgmt.msc
+        4. In Device Manager: click View, then Show Hidden Devices.
+        5. Expand "Universal Serial Bus controllers"
+        6. On each grayed-out node, right-click and select "Uninstall"
+        Procedure to change COM Port assignments:
+        1. Right-click on the Serial Device you want to change and chose Properties.
+        2. In the Properties window, click the Port Settings tab, then "Advanced".
+        3. In the window that opens, chose an unused COM Port from the dropdown list.
+
+HPGLViewer pen colors:
+  SP1  Black
+  SP2  Red
+  SP3  Green
+  SP4  Yellow
+  SP5  Blue
+  SP6  Purple / Magenta
+  SP7  Cyan
+  SP8  Black
+
+TODO:
+- [x] Test USB serial & parallel cables:
+  [x] Parallel device OK w/ disconnecting & reconnecting plotter as long as cable stays connected?
+      [x] OK w/ sleep & wake, rebooting, etc.?  Sleep/wake fine
+  [x] Serial cable OK w/ disconnecting & reconnecting plotter? yes
+      [x] OK w/ sleep & wake, rebooting, etc.? yes
+  [ ] Clean up solution
+      [ ] Get all projects to build for x86/Win32 in debug & release
+      [x] Fix project dependencies so they don't always build w/ each test
+  [x] Figure out why changing USB ports causes plotter to show "Alarm" light
+  [x] Map out USB numbers for all USB connectors for parallel cable
+
+HPGL Circle Test: IN; SP1; PA600,4000; CI400; SP0; PA0,0
+
+Plotter responses:
+Command Debugger                puts
+------- -------------------     ---------------
+"OI;"   "7475A\r"               7475A
+"OS;"   "16\r"                  16
+"OF;"   "40,40\r40,40\r"        40,40
+"OE;"   "0\r"                   0
+"OA;"   "0,0,0\r0,0,0\r"        0,0,0
+"OC;"   "0,0,0\r"               0,0,0
+"OO;"   "0,1,0,0,1,0,0,0\r"     0,1,0,0,1,0,0,0
+"OH;"   "0,0,16640,10408\r"     0,0,16640,10408
+
+Note: Plotter doesn't reply to any command while transport is in motion
+      Plotter requires 25ms to populate output buffer after receiving command
+      Plotter requires 25ms delay before receiving a command that produces a response
+
+Instructions for digitizing:
+  If the digitizing begins at the start location, plotting begins from there
+  If the digitizing begins anywhere else, the pen is lifted from 0,0 and
+    moved to the start location, and plotting begins there.
+  Lines are drawn continuously from there without the pen being lifted.
+  In order to lift the pen and start plotting from another location,
+    press the pen up/down button once at the end of the first plot,
+    then move the pen to the desired location of the next start point,
+    then press the Enter button.  Plotting will resume from there, and the
+    pen will remain down on the paper for continuous plotting until the
+    pen up/down button is pressed again.
+  To create a series of dots, move the pen to the desired location of each
+    dot, and press the pen up/down button once and the Enter button once
+    for each dot.  The pen will be lifted after making each dot mark.
+  To resume drawing uninterrupted lines, from the last dot, move the pen to
+    the desired starting location of the first line and press the Enter
+    button.  Then move the pen to each desired corner point and press Enter
+    once for each corner as before.
+  To end the plot, press the Enter button twice without moving the pen.
+  Then the plot will be complete.
+
+  Internally, the plot is saved by ReadDigitizedPoints () as a series of
+    groups of 3 int values, and converted to a string of HPGL instructions
+    by PlotDigitizedPoints ().  Both may be saved to a file internally by
+    adding the code to do so.
